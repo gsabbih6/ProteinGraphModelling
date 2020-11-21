@@ -6,6 +6,7 @@ import com.mxgraph.model.mxGeometry;
 import com.mxgraph.swing.mxGraphComponent;
 import com.mxgraph.util.mxConstants;
 import com.mxgraph.util.mxStyleUtils;
+import com.mxgraph.util.png.mxPngImageEncoder;
 import com.mxgraph.view.mxStylesheet;
 import org.jgrapht.ext.JGraphXAdapter;
 import org.jgrapht.graph.DefaultEdge;
@@ -21,13 +22,15 @@ import java.io.StringWriter;
 import java.io.Writer;
 import java.net.URI;
 import java.util.*;
+import java.util.List;
 
 public class ProteinGraph extends DefaultUndirectedWeightedGraph<AminoAcid, Bond> {
     public static final String EXPORT_TYPE_CSV = "csv";
     public static final String EXPORT_TYPE_MATRIX = "matrix";
     public static final String EXPORT_TYPE_DOT = "dot";
+    public static final String EXPORT_TYPE_IMAGE = "image";
     private static final long serialVersionUID = 2202072534703043194L;
-
+    private JGraphXAdapter<AminoAcid, Bond> jGraphXAdapter;
     private static final Dimension DEFAULT_SIZE = new Dimension(530, 320);
 
     public ProteinGraph(Class<? extends Bond> edgeClass) {
@@ -46,10 +49,17 @@ public class ProteinGraph extends DefaultUndirectedWeightedGraph<AminoAcid, Bond
             case EXPORT_TYPE_DOT:
                 exportAsDOT(this);
                 break;
+            case EXPORT_TYPE_IMAGE:
+                exportAsImage();
+                break;
             default:
 
         }
 
+    }
+
+    private void exportAsImage() {
+//        mxPngImageEncoder
     }
 
     private void exportAsMatrix(ProteinGraph proteinGraph) {
@@ -104,7 +114,7 @@ public class ProteinGraph extends DefaultUndirectedWeightedGraph<AminoAcid, Bond
     public JFrame visualize(String title) {
         // show network mapGraph
         if (this.vertexSet().size() > 0) {
-            JGraphXAdapter<AminoAcid, Bond> jGraphXAdapter = new JGraphXAdapter<>(this);
+            jGraphXAdapter = new JGraphXAdapter<>(this);
 //            jGraphXAdapter.setLabelsClipped(true);
 //            jGraphXAdapter.set
 
@@ -121,7 +131,7 @@ public class ProteinGraph extends DefaultUndirectedWeightedGraph<AminoAcid, Bond
                 mxCell cell = (mxCell) c;
                 if (((mxCell) c).isVertex()) {
                     AminoAcid a = (AminoAcid) cell.getValue();
-                    cell.setValue("");//a.getLabel() + "(" + a.getId() + ")");
+                    cell.setValue(a.getLabel());//a.getLabel() + "(" + a.getId() + ")");
                     System.out.println(a.getLabel());
                     cell.getGeometry().setWidth(40);
                     cell.getGeometry().setHeight(40);
@@ -161,7 +171,7 @@ public class ProteinGraph extends DefaultUndirectedWeightedGraph<AminoAcid, Bond
                 }
             }
 
-            mxIGraphLayout layout = new mxOrganicLayout(jGraphXAdapter);
+            mxIGraphLayout layout = new mxCircleLayout(jGraphXAdapter);
 
             layout.execute(jGraphXAdapter.getDefaultParent());
 
@@ -181,6 +191,38 @@ public class ProteinGraph extends DefaultUndirectedWeightedGraph<AminoAcid, Bond
             return frame;
         }
         return null;
+    }
+
+    public void addAAwithPeptideBonds(Map<Integer, AminoAcid> aminoAcids) {
+        int i = 0;
+        int j = 1;
+        int seqL = aminoAcids.size();
+        List<AminoAcid> lList = new LinkedList<>(aminoAcids.values());
+        while (i < seqL - 1 || j < seqL) {
+            this.addVertex(lList.get(i));
+            this.addVertex(lList.get(j));
+            this.addEdge(lList.get(i), lList.get(j), new Bond(Bond.PEPTIDE_BOND, String.valueOf(i)));
+            i++;
+            j++;
+        }
+
+    }
+
+    public void addHydrogenBonds(Map<AminoAcid, ArrayList<AminoAcid>> aminoAcidsHBonds) {
+        // Add HBonds
+        int i = 0;
+        for (Map.Entry<AminoAcid, ArrayList<AminoAcid>> es : aminoAcidsHBonds.entrySet()) {
+
+            AminoAcid aa = es.getKey();
+            for (AminoAcid aaa : es.getValue()) {
+
+                this.addEdge(aa, aaa, new Bond(Bond.HYDROGEN_BOND, String.valueOf(i)));
+                i++;
+
+            }
+        }
+
+//
     }
 //
 //    private void createStyles(JGraphXAdapter<AminoAcid, Bond> jGraphXAdapter) {
