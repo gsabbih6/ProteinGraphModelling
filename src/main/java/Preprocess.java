@@ -56,12 +56,12 @@ public class Preprocess {
 //                    Sheh-Yi Sheu, Dah-Yen Yang, H. L. Selzle, and E. W. Schlag
                     int resid = g.getResidueNumber().getSeqNum();
                     int res1 = resid == state.getAccept1().getPartner() || state.getAccept1().getPartner() == 0
-                            || Math.abs(state.getAccept1().getEnergy()) <500 ? 0 : state.getAccept1().getPartner() + 1;
+                            || Math.abs(state.getAccept1().getEnergy()) < 500 ? 0 : state.getAccept1().getPartner() + 1;
                     int res2 = state.getDonor1().getPartner();
                     int res3 =
                             resid == state.getAccept2().getPartner()
                                     || state.getAccept2().getPartner() == 0
-                                    || Math.abs(state.getAccept1().getEnergy()) <500 ? 0 : state.getAccept2().getPartner() + 1;
+                                    || Math.abs(state.getAccept1().getEnergy()) < 500 ? 0 : state.getAccept2().getPartner() + 1;
                     int res4 = state.getDonor2().getPartner();
                     System.out.println(state.printDSSPline(0));
                     System.out.println(state.getAccept1().getEnergy());
@@ -130,6 +130,21 @@ public class Preprocess {
         } catch (StructureException e) {
             System.out.println("Error message: " + e.getMessage());
         }
+    }
+
+    public String printDSSPFormat() {
+        SecStrucCalc ssp = new SecStrucCalc(); //Instantiation needed
+        String s = "";
+        try {
+            List<SecStrucState> secondaryStructure = ssp.calculate(structure, true);
+            for (SecStrucState state : secondaryStructure) {
+                s = state.printDSSPline(0);
+
+            }
+        } catch (StructureException e) {
+            e.printStackTrace();
+        }
+        return s;
     }
 
     public Map<Integer, AminoAcid> getAminoAcidSet() {
