@@ -14,6 +14,7 @@ public class Preprocess {
     private final String PDBID;
     Map<Integer, AminoAcid> aminoAcidSet;
     Map<AminoAcid, ArrayList<AminoAcid>> hBondArrayListMap;
+
     private Structure structure;
     private String proteinChain;
 
@@ -24,6 +25,7 @@ public class Preprocess {
         hBondArrayListMap = new LinkedHashMap<>();
         setStructure(PBDID);
 //        setSecondaryStructure(PBDID);
+        process();
     }
 
     private void setSecondaryStructure(List<Group> groups) {
@@ -63,8 +65,8 @@ public class Preprocess {
                                     || state.getAccept2().getPartner() == 0
                                     || Math.abs(state.getAccept1().getEnergy()) < 500 ? 0 : state.getAccept2().getPartner() + 1;
                     int res4 = state.getDonor2().getPartner();
-                    System.out.println(state.printDSSPline(0));
-                    System.out.println(state.getAccept1().getEnergy());
+//                    System.out.println(state.printDSSPline(0));
+//                    System.out.println(state.getAccept1().getEnergy());
                     ArrayList<AminoAcid> l = new ArrayList<>();
                     if (aminoAcidSet.containsKey(res1)) {
                         l.add(aminoAcidSet.get(res1));
