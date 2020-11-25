@@ -14,13 +14,14 @@ import org.jgrapht.graph.DefaultUndirectedWeightedGraph;
 import org.jgrapht.alg.clique.*;
 import org.jgrapht.nio.Attribute;
 import org.jgrapht.nio.DefaultAttribute;
-import org.jgrapht.nio.csv.CSVExporter;
 import org.jgrapht.nio.dot.DOTExporter;
 import org.jgrapht.nio.matrix.MatrixExporter;
+//import org.jgrapht.nio.matrix.MatrixExporter;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.OutputStream;
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.net.URI;
@@ -40,14 +41,14 @@ public class ProteinGraph extends DefaultUndirectedWeightedGraph<AminoAcid, Bond
         super(edgeClass);
     }
 
-    public void exportGraph(String supportedType) {
+    public void exportGraph(String supportedType) throws FileNotFoundException {
 
         switch (supportedType) {
             case EXPORT_TYPE_CSV:
                 exportAsCSV(this);
                 break;
             case EXPORT_TYPE_MATRIX:
-                exportAsMatrix(this);
+                exportAsMatrix( this);
                 break;
             case EXPORT_TYPE_DOT:
                 exportAsDOT(this);
@@ -65,21 +66,18 @@ public class ProteinGraph extends DefaultUndirectedWeightedGraph<AminoAcid, Bond
 //        mxPngImageEncoder
     }
 
-    private void exportAsMatrix(ProteinGraph proteinGraph) {
-        MatrixExporter matrixEport = new MatrixExporter(MatrixExporter.Format.SPARSE_LAPLACIAN_MATRIX);
-//        OutputStream
-//        matrixEport.exportGraph();raph(this, System.out);
-//        matrixEport.exportGraph();
+    private void exportAsMatrix(ProteinGraph proteinGraph) throws FileNotFoundException {
+//        new MatrixExporter().exportAdjacencyMatrix( new PrintWriter(out), proteinGraph );
+        PrintWriter out = new PrintWriter("matrix.txt");
+        new CustomMatrixExporter(25).exportGraph(proteinGraph, out);
     }
 
-    private void exportAsCSV(ProteinGraph proteinGraph) {
-        CustomCSVExporter exporter = new CustomCSVExporter(25);
-        Writer writer = new StringWriter();
-        exporter.exportGraph(proteinGraph,System.out);
-    }
+    private void exportAsCSV(ProteinGraph proteinGraph) throws FileNotFoundException {
+       // new CustomCSVExporter(25).exportGraph(proteinGraph, System.out);
+        PrintWriter out = new PrintWriter("test.cvs");
+        new CustomCSVExporter(25).exportGraph(proteinGraph, out);
 
-    //A=[H,X]
-    //Ni = [1*41] + [1*25] [1.........24]
+    }
 
     private void exportAsDOT(ProteinGraph proteinGraph) {
         DOTExporter<AminoAcid, Bond> exporter =

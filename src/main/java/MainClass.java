@@ -1,9 +1,10 @@
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.*;
 
 public class MainClass {
 
-    public static void main(String[] args) throws FileNotFoundException {
+    public static void main(String[] args) throws IOException {
 
         Preprocess preprocess = new Preprocess("1fd4", "A");
         Map<Integer, AminoAcid> aminoAcids = preprocess.getAminoAcidSet();//
@@ -17,6 +18,7 @@ public class MainClass {
 //        System.out.println(proteinGraph.findMaximumCliques());
 //        proteinGraph.visualize("Visualizer");
 //        proteinGraph.exportGraph(ProteinGraph.EXPORT_TYPE_DOT);
-        proteinGraph.exportGraph(ProteinGraph.EXPORT_TYPE_CSV);//
+ //       proteinGraph.exportGraph(ProteinGraph.EXPORT_TYPE_CSV);//
+        proteinGraph.exportGraph(ProteinGraph.EXPORT_TYPE_MATRIX);
     }
 }
