@@ -5,7 +5,7 @@ public class MainClass {
 
     public static void main(String[] args) throws FileNotFoundException {
 
-        Preprocess preprocess = new Preprocess("1fd4", "A");
+        Preprocess preprocess = new Preprocess("3inr", "A");
         Map<Integer, AminoAcid> aminoAcids = preprocess.getAminoAcidSet();//
         Map<AminoAcid, ArrayList<AminoAcid>> aminoAcidsHBonds = preprocess.getBondArrayListMap();//
 

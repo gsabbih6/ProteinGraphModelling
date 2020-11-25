@@ -19,7 +19,7 @@ public class CustomCSVExporter {
         int n = g.vertexSet().size();
         Iterator vertexIt1 = g.vertexSet().iterator();
         PrintWriter out = new PrintWriter(writer);
-        System.out.println("Graph Size is 0 " + n + "x" + (n + featuresize)+" that is each vertices has ");
+        System.out.println("Graph Size is 0 " + n + "x" + (n + featuresize) + " that is each vertices has ");
         while (vertexIt1.hasNext()) { // looping through each vertex ie N rows
 
             AminoAcid v = (AminoAcid) vertexIt1.next();
@@ -28,7 +28,11 @@ public class CustomCSVExporter {
             while (vertexIt2.hasNext()) { //looping through each vertex ie N columns
                 AminoAcid u = (AminoAcid) vertexIt2.next();
                 Bond e = g.getEdge(v, u);
-                if (e == null) {
+                if (v.equals(u)) {
+                    System.out.print("1"); // self loops
+                } else
+
+                    if (e == null) {
 //                    this.exportEscapedField(out, "0");
                     System.out.print("0");
                 } else {
