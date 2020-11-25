@@ -14,6 +14,7 @@ import org.jgrapht.graph.DefaultUndirectedWeightedGraph;
 import org.jgrapht.alg.clique.*;
 import org.jgrapht.nio.Attribute;
 import org.jgrapht.nio.DefaultAttribute;
+import org.jgrapht.nio.csv.CSVExporter;
 import org.jgrapht.nio.dot.DOTExporter;
 import org.jgrapht.nio.matrix.MatrixExporter;
 
@@ -68,13 +69,17 @@ public class ProteinGraph extends DefaultUndirectedWeightedGraph<AminoAcid, Bond
         MatrixExporter matrixEport = new MatrixExporter(MatrixExporter.Format.SPARSE_LAPLACIAN_MATRIX);
 //        OutputStream
 //        matrixEport.exportGraph();raph(this, System.out);
+//        matrixEport.exportGraph();
     }
 
     private void exportAsCSV(ProteinGraph proteinGraph) {
         CustomCSVExporter exporter = new CustomCSVExporter(25);
         Writer writer = new StringWriter();
-        exporter.exportGraph(proteinGraph,writer);
+        exporter.exportGraph(proteinGraph,System.out);
     }
+
+    //A=[H,X]
+    //Ni = [1*41] + [1*25] [1.........24]
 
     private void exportAsDOT(ProteinGraph proteinGraph) {
         DOTExporter<AminoAcid, Bond> exporter =
