@@ -68,14 +68,14 @@ public class ProteinGraph extends DefaultUndirectedWeightedGraph<AminoAcid, Bond
 
     private void exportAsMatrix(ProteinGraph proteinGraph) throws FileNotFoundException {
 //        new MatrixExporter().exportAdjacencyMatrix( new PrintWriter(out), proteinGraph );
-        PrintWriter out = new PrintWriter("matrix.txt");
-        new CustomMatrixExporter(25).exportGraph(proteinGraph, out);
+        PrintWriter out = new PrintWriter("pdbid.txt");
+        new CustomCSVExporter(25).exportGraph(proteinGraph, out, " ");
     }
 
     private void exportAsCSV(ProteinGraph proteinGraph) throws FileNotFoundException {
        // new CustomCSVExporter(25).exportGraph(proteinGraph, System.out);
-        PrintWriter out = new PrintWriter("test.cvs");
-        new CustomCSVExporter(25).exportGraph(proteinGraph, out);
+        PrintWriter out = new PrintWriter("pdbid.csv");
+        new CustomCSVExporter(25).exportGraph(proteinGraph, out, ",");
 
     }
 
