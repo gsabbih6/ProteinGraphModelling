@@ -9,7 +9,6 @@
         <outputRelativeToContentRoot value="true" />
         <module name="ProteinGraphModelling" />
         <module name="ProteinGraph" />
-        <module name="ProteinGraphModelling" />
       </profile>
     </annotationProcessing>
   </component>
