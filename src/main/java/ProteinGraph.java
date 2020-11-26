@@ -79,7 +79,7 @@ public class ProteinGraph extends DefaultUndirectedWeightedGraph<AminoAcid, Bond
 
     }
 
-    private void exportAsDOT(ProteinGraph proteinGraph) {
+    private void exportAsDOT(ProteinGraph proteinGraph) throws FileNotFoundException{
         DOTExporter<AminoAcid, Bond> exporter =
                 new DOTExporter<>(v -> v.getLabel().replace('.', '_'));
         exporter.setVertexAttributeProvider((v) -> {
@@ -87,7 +87,8 @@ public class ProteinGraph extends DefaultUndirectedWeightedGraph<AminoAcid, Bond
             map.put("label", DefaultAttribute.createAttribute(v.toString()));
             return map;
         });
-        Writer writer = new StringWriter();
+        //Writer writer = new StringWriter();
+        PrintWriter writer = new PrintWriter("pdbid.dot");
         exporter.exportGraph(proteinGraph, writer);
 //        System.out.println(writer.toString());
     }

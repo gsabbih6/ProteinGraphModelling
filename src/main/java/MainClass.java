@@ -17,7 +17,7 @@ public class MainClass {
 
 //        System.out.println(proteinGraph.findMaximumCliques());
 //        proteinGraph.visualize("Visualizer");
-//        proteinGraph.exportGraph(ProteinGraph.EXPORT_TYPE_DOT);
+        proteinGraph.exportGraph(ProteinGraph.EXPORT_TYPE_DOT);
         proteinGraph.exportGraph(ProteinGraph.EXPORT_TYPE_CSV);//
         proteinGraph.exportGraph(ProteinGraph.EXPORT_TYPE_MATRIX);
     }
