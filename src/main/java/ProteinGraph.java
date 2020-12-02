@@ -1,30 +1,19 @@
 import com.mxgraph.layout.*;
-import com.mxgraph.layout.hierarchical.mxHierarchicalLayout;
-import com.mxgraph.layout.orthogonal.mxOrthogonalLayout;
 import com.mxgraph.model.mxCell;
-import com.mxgraph.model.mxGeometry;
 import com.mxgraph.swing.mxGraphComponent;
 import com.mxgraph.util.mxConstants;
-import com.mxgraph.util.mxStyleUtils;
-import com.mxgraph.util.png.mxPngImageEncoder;
-import com.mxgraph.view.mxStylesheet;
 import org.jgrapht.ext.JGraphXAdapter;
-import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.DefaultUndirectedWeightedGraph;
 import org.jgrapht.alg.clique.*;
 import org.jgrapht.nio.Attribute;
 import org.jgrapht.nio.DefaultAttribute;
 import org.jgrapht.nio.dot.DOTExporter;
-import org.jgrapht.nio.matrix.MatrixExporter;
 //import org.jgrapht.nio.matrix.MatrixExporter;
 
 import javax.swing.*;
 import java.awt.*;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.io.Writer;
-import java.net.URI;
 import java.util.*;
 import java.util.List;
 
@@ -36,19 +25,20 @@ public class ProteinGraph extends DefaultUndirectedWeightedGraph<AminoAcid, Bond
     private static final long serialVersionUID = 2202072534703043194L;
     private JGraphXAdapter<AminoAcid, Bond> jGraphXAdapter;
     private static final Dimension DEFAULT_SIZE = new Dimension(530, 320);
+    private String filename;
 
     public ProteinGraph(Class<? extends Bond> edgeClass) {
         super(edgeClass);
     }
 
-    public void exportGraph(String supportedType) throws FileNotFoundException {
-
+    public void exportGraph(String supportedType, String filename) throws FileNotFoundException {
+        this.filename = filename;
         switch (supportedType) {
             case EXPORT_TYPE_CSV:
                 exportAsCSV(this);
                 break;
             case EXPORT_TYPE_MATRIX:
-                exportAsMatrix( this);
+                exportAsMatrix(this);
                 break;
             case EXPORT_TYPE_DOT:
                 exportAsDOT(this);
@@ -68,27 +58,27 @@ public class ProteinGraph extends DefaultUndirectedWeightedGraph<AminoAcid, Bond
 
     private void exportAsMatrix(ProteinGraph proteinGraph) throws FileNotFoundException {
 //        new MatrixExporter().exportAdjacencyMatrix( new PrintWriter(out), proteinGraph );
-        PrintWriter out = new PrintWriter("pdbid.txt");
+        PrintWriter out = new PrintWriter(filename + ".txt");
         new CustomCSVExporter(25).exportGraph(proteinGraph, out, " ");
     }
 
     private void exportAsCSV(ProteinGraph proteinGraph) throws FileNotFoundException {
-       // new CustomCSVExporter(25).exportGraph(proteinGraph, System.out);
-        PrintWriter out = new PrintWriter("pdbid.csv");
+        // new CustomCSVExporter(25).exportGraph(proteinGraph, System.out);
+        PrintWriter out = new PrintWriter(filename + ".csv");
         new CustomCSVExporter(25).exportGraph(proteinGraph, out, ",");
 
     }
 
-    private void exportAsDOT(ProteinGraph proteinGraph) throws FileNotFoundException{
+    private void exportAsDOT(ProteinGraph proteinGraph) throws FileNotFoundException {
         DOTExporter<AminoAcid, Bond> exporter =
-                new DOTExporter<>(v -> v.getLabel().replace('.', '_'));
+                new DOTExporter<>();
         exporter.setVertexAttributeProvider((v) -> {
             Map<String, Attribute> map = new LinkedHashMap<>();
-            map.put("label", DefaultAttribute.createAttribute(v.toString()));
+            map.put("label", DefaultAttribute.createAttribute(v.getLabel()));
             return map;
         });
         //Writer writer = new StringWriter();
-        PrintWriter writer = new PrintWriter("pdbid.dot");
+        PrintWriter writer = new PrintWriter(filename + ".dot");
         exporter.exportGraph(proteinGraph, writer);
 //        System.out.println(writer.toString());
     }

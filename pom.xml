@@ -92,28 +92,60 @@
         </dependency>
 
         <!--        this apache library is for matrix computation and its compare to NumPy-->
-        <dependency>
-            <groupId>org.ejml</groupId>
-            <artifactId>ejml-all</artifactId>
-            <version>0.40</version>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>org.ejml</groupId>-->
+<!--            <artifactId>ejml-all</artifactId>-->
+<!--            <version>0.40</version>-->
+<!--        </dependency>-->
 
         <!--        Java Deep learning library compared to tensorflow. Its a free commercial grade library-->
-        <dependency>
-            <groupId>org.nd4j</groupId>
-            <artifactId>nd4j-native-platform</artifactId>
-            <version>1.0.0-beta3</version>
-        </dependency>
+
+
         <dependency>
             <groupId>org.datavec</groupId>
             <artifactId>datavec-api</artifactId>
-            <version>1.0.0-beta3</version>
+            <version>1.0.0-beta7</version>
+        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>org.deeplearning4j</groupId>-->
+<!--            <artifactId>deeplearning4j-core</artifactId>-->
+<!--            <version>1.0.0-beta7</version>-->
+<!--        </dependency>-->
+        <dependency>
+            <groupId>org.nd4j</groupId>
+            <artifactId>nd4j-cuda-10.2-platform</artifactId>
+            <version>1.0.0-beta7</version>
+<!--            <classifier>linux-x86_64</classifier>-->
         </dependency>
         <dependency>
             <groupId>org.deeplearning4j</groupId>
-            <artifactId>deeplearning4j-core</artifactId>
+            <artifactId>deeplearning4j-cuda-10.2</artifactId>
             <version>1.0.0-beta7</version>
         </dependency>
+        <dependency>
+            <groupId>org.bytedeco</groupId>
+            <artifactId>cuda-platform-redist</artifactId>
+            <version>10.2-7.6-1.5.3</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.github.haifengl</groupId>
+            <artifactId>smile-core</artifactId>
+            <version>2.5.3</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.github.haifengl</groupId>
+            <artifactId>smile-plot</artifactId>
+            <version>2.5.3</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/jfree/jfreechart -->
+        <dependency>
+            <groupId>jfree</groupId>
+            <artifactId>jfreechart</artifactId>
+            <version>1.0.13</version>
+        </dependency>
+
     </dependencies>
     <properties>
         <maven.compiler.source>1.8</maven.compiler.source>
