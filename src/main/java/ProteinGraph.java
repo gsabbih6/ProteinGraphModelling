@@ -64,6 +64,7 @@ public class ProteinGraph extends DefaultUndirectedWeightedGraph<AminoAcid, Bond
 
     private void exportAsCSV(ProteinGraph proteinGraph) throws FileNotFoundException {
         // new CustomCSVExporter(25).exportGraph(proteinGraph, System.out);
+        System.out.println(filename);
         PrintWriter out = new PrintWriter(filename + ".csv");
         new CustomCSVExporter(25).exportGraph(proteinGraph, out, ",");
 
