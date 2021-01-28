@@ -58,13 +58,13 @@ public class Preprocess {
 //                    Sheh-Yi Sheu, Dah-Yen Yang, H. L. Selzle, and E. W. Schlag
                     int resid = g.getResidueNumber().getSeqNum();
                     int res1 = resid == state.getAccept1().getPartner() || state.getAccept1().getPartner() == 0
-                            || Math.abs(state.getAccept1().getEnergy()) < 900
+                            || Math.abs(state.getAccept1().getEnergy()) < 500
                             ? 0 : state.getAccept1().getPartner() + 1;
                     int res2 = state.getDonor1().getPartner();
                     int res3 =
                             resid == state.getAccept2().getPartner()
                                     || state.getAccept2().getPartner() == 0
-                                    || Math.abs(state.getAccept1().getEnergy()) < 900
+                                    || Math.abs(state.getAccept1().getEnergy()) < 500
                                     ? 0 : state.getAccept2().getPartner() + 1;
                     int res4 = state.getDonor2().getPartner();
 //                    System.out.println(state.printDSSPline(0));
@@ -100,26 +100,21 @@ public class Preprocess {
 
     public boolean process() {
 
-        try {
-            Chain chain = structure.getChainByPDB(proteinChain);// the first chain must be specific or prefer proteins with one chain
+        Chain chain = structure.getChains().get(0);//getChainByPDB(proteinChain);// the first chain must be specific or prefer proteins with one chain
 
-            // get all aminoacids
-            List<Group> group = chain.getAtomGroups(GroupType.AMINOACID);
-            for (Group g : group) {
-                org.biojava.nbio.structure.AminoAcid amino = (org.biojava.nbio.structure.AminoAcid) g;
-                AminoAcid aminoAcid = new AminoAcid();
-                aminoAcid.setId(amino.getResidueNumber().getSeqNum());
-                aminoAcid.setLabel(amino.getAminoType().toString());
+        // get all aminoacids
+        List<Group> group = chain.getAtomGroups(GroupType.AMINOACID);
+        for (Group g : group) {
+            org.biojava.nbio.structure.AminoAcid amino = (org.biojava.nbio.structure.AminoAcid) g;
+            AminoAcid aminoAcid = new AminoAcid();
+            aminoAcid.setId(amino.getResidueNumber().getSeqNum());
+            aminoAcid.setLabel(amino.getAminoType().toString());
 //                aminoAcid.setProperty(amino.getProperties());
-                aminoAcidSet.put(amino.getResidueNumber().getSeqNum(), aminoAcid);
+            aminoAcidSet.put(amino.getResidueNumber().getSeqNum(), aminoAcid);
 
-            }
-            setSecondaryStructure(group);
-
-
-        } catch (StructureException e) {
-            e.printStackTrace();
         }
+        setSecondaryStructure(group);
+
 
         return false;
     }

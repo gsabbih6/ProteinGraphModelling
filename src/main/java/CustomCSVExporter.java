@@ -102,6 +102,7 @@ public class CustomCSVExporter {
             }
 
             // add X feature vector
+//            System.out.println(v.getLabel());
             int id = Integer.parseInt(Constants.getAANumber(v));
 
             this.exportEscapedField(out, delimiter);

@@ -46,28 +46,40 @@ public class Constants {
     public final static String proline = "P";
     public final static String proline_color = "#b02a3a";
     public final static String proline_number = "15";
+    public final static String pyrrolysine = "O";
+    public final static String pyrrolysine_color = "#b0403a";
+    public final static String pyrrolysine_number = "16";
     public final static String serine = "S";
     public final static String serine_color = "#a6ad75";
-    public final static String serine_number = "16";
+    public final static String serine_number = "17";
+    public final static String selenocysteine = "U";
+    public final static String selenocysteine_color = "#a6ad75";
+    public final static String selenocysteine_number = "18";
     public final static String threonine = "T";
     public final static String threonine_color = "#fc1ea9";
-    public final static String threonine_number = "17";
+    public final static String threonine_number = "18";
     public final static String tryptophan = "W";
     public final static String tryptophan_color = "#29160d";
-    public final static String tryptophan_number = "18";
+    public final static String tryptophan_number = "20";
     public final static String tyrosine = "Y";
     public final static String tyrosine_color = "#ced65c";
-    public final static String tyrosine_number = "19";
+    public final static String tyrosine_number = "21";
     public final static String valine = "V";
     public final static String valine_color = "#ce065c";
-    public final static String valine_number = "20";
+    public final static String valine_number = "22";
     //    Sometimes it is not possible two differentiate two closely related amino acids, therefore we have the special cases:
     public final static String asparagine_aspartic = "B";
     public final static String asparagine_aspartic_color = "#ab04f7";
-    public final static String asparagine_aspartic_number = "21";
+    public final static String asparagine_aspartic_number = "23";
     public final static String glutamine_glutamic = "Z";
     public final static String glutamine_glutamic_color = "#bccc15";
-    public final static String glutamine_glutamic_number = "22";
+    public final static String glutamine_glutamic_number = "24";
+    public final static String any = "X";
+    public final static String any_color = "#bacc15";
+    public final static String any_number = "25";
+    public final static String leucine_isoleucine = "J";
+    public final static String leucine_isoleucine_color = "#bcca15";
+    public final static String leucine_isoleucine_number = "26";
 
     public static Hashtable<String, String> colormap() {
         Hashtable<String, String> colormap = new Hashtable<>();
@@ -95,7 +107,10 @@ public class Constants {
         colormap.put(tryptophan, tryptophan_color);
         colormap.put(tyrosine, tyrosine_color);
         colormap.put(valine, valine_color);
-
+        colormap.put(pyrrolysine, pyrrolysine_color);
+        colormap.put(selenocysteine, selenocysteine_color);
+        colormap.put(any, any_color);
+        colormap.put(leucine_isoleucine, leucine_isoleucine_color);
         return colormap;
     }
 
@@ -124,6 +139,11 @@ public class Constants {
         numbermap.put(tryptophan, tryptophan_number);
         numbermap.put(tyrosine, tyrosine_number);
         numbermap.put(valine, valine_number);
+        numbermap.put(pyrrolysine, pyrrolysine_number);
+        numbermap.put(selenocysteine, selenocysteine_number);
+        numbermap.put(any, any_number);
+        numbermap.put(leucine_isoleucine, leucine_isoleucine_number);
+//        System.out.println(v.getLabel());
         return numbermap.get(v.getLabel());
 
     }

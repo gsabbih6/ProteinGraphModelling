@@ -215,8 +215,9 @@ public class ProteinGraph extends DefaultUndirectedWeightedGraph<AminoAcid, Bond
         int i = 0;
         for (Map.Entry<AminoAcid, ArrayList<AminoAcid>> es : aminoAcidsHBonds.entrySet()) {
 
-            AminoAcid aa = es.getKey();
+            AminoAcid aa = es.getKey();if (aa == null) continue;
             for (AminoAcid aaa : es.getValue()) {
+
 
                 this.addEdge(aa, aaa, new Bond(Bond.HYDROGEN_BOND, String.valueOf(i)));
                 i++;

@@ -92,11 +92,11 @@
         </dependency>
 
         <!--        this apache library is for matrix computation and its compare to NumPy-->
-<!--        <dependency>-->
-<!--            <groupId>org.ejml</groupId>-->
-<!--            <artifactId>ejml-all</artifactId>-->
-<!--            <version>0.40</version>-->
-<!--        </dependency>-->
+        <!--        <dependency>-->
+        <!--            <groupId>org.ejml</groupId>-->
+        <!--            <artifactId>ejml-all</artifactId>-->
+        <!--            <version>0.40</version>-->
+        <!--        </dependency>-->
 
         <!--        Java Deep learning library compared to tensorflow. Its a free commercial grade library-->
 
@@ -106,26 +106,43 @@
             <artifactId>datavec-api</artifactId>
             <version>1.0.0-beta7</version>
         </dependency>
+        <dependency>
+            <groupId>org.deeplearning4j</groupId>
+            <artifactId>deeplearning4j-core</artifactId>
+            <version>1.0.0-beta7</version>
+        </dependency>
 <!--        <dependency>-->
-<!--            <groupId>org.deeplearning4j</groupId>-->
-<!--            <artifactId>deeplearning4j-core</artifactId>-->
+<!--            <groupId>org.nd4j</groupId>-->
+<!--            <artifactId>nd4j-cuda-10.2-platform</artifactId>-->
 <!--            <version>1.0.0-beta7</version>-->
+<!--            &lt;!&ndash;            <classifier>linux-x86_64</classifier>&ndash;&gt;-->
 <!--        </dependency>-->
         <dependency>
             <groupId>org.nd4j</groupId>
-            <artifactId>nd4j-cuda-10.2-platform</artifactId>
+            <artifactId>nd4j-native-platform</artifactId>
             <version>1.0.0-beta7</version>
-<!--            <classifier>linux-x86_64</classifier>-->
         </dependency>
+        <dependency>
+            <groupId>org.nd4j</groupId>
+            <artifactId>nd4j-native</artifactId>
+            <version>1.0.0-beta7</version>
+            <classifier>windows-x86_64-avx2</classifier>
+        </dependency>
+        <!--        <dependency>-->
+        <!--            <groupId>org.deeplearning4j</groupId>-->
+        <!--            <artifactId>deeplearning4j-cuda-10.2</artifactId>-->
+        <!--            <version>1.0.0-beta7</version>-->
+        <!--        </dependency>-->
+<!--        <dependency>-->
+<!--            <groupId>org.bytedeco</groupId>-->
+<!--            <artifactId>cuda-platform-redist</artifactId>-->
+<!--            <version>10.2-7.6-1.5.3</version>-->
+<!--        </dependency>-->
+
         <dependency>
             <groupId>org.deeplearning4j</groupId>
-            <artifactId>deeplearning4j-cuda-10.2</artifactId>
+            <artifactId>deeplearning4j-ui</artifactId>
             <version>1.0.0-beta7</version>
-        </dependency>
-        <dependency>
-            <groupId>org.bytedeco</groupId>
-            <artifactId>cuda-platform-redist</artifactId>
-            <version>10.2-7.6-1.5.3</version>
         </dependency>
 
         <dependency>
@@ -151,18 +168,6 @@
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
     </properties>
-    <!--    <repositories>-->
-    <!--        <repository>-->
-    <!--            <id>oss.sonatype.org-snapshot</id>-->
-    <!--            <url>http://oss.sonatype.org/content/repositories/snapshots</url>-->
-    <!--            <releases>-->
-    <!--                <enabled>false</enabled>-->
-    <!--            </releases>-->
-    <!--            <snapshots>-->
-    <!--                <enabled>true</enabled>-->
-    <!--            </snapshots>-->
-    <!--        </repository>-->
-    <!--    </repositories>-->
     <build>
         <plugins>
             <plugin>

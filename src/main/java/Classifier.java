@@ -1,3 +1,4 @@
+
 import org.datavec.api.records.reader.RecordReader;
 import org.datavec.api.records.reader.impl.csv.CSVRecordReader;
 import org.datavec.api.split.FileSplit;
@@ -5,83 +6,212 @@ import org.deeplearning4j.clustering.algorithm.Distance;
 import org.deeplearning4j.clustering.cluster.ClusterSet;
 import org.deeplearning4j.clustering.cluster.Point;
 import org.deeplearning4j.clustering.kmeans.KMeansClustering;
+import org.deeplearning4j.core.storage.StatsStorage;
 import org.deeplearning4j.datasets.datavec.RecordReaderDataSetIterator;
+import org.deeplearning4j.datasets.iterator.DataSetIteratorSplitter;
+import org.deeplearning4j.datasets.iterator.INDArrayDataSetIterator;
+import org.deeplearning4j.datasets.iterator.file.FileDataSetIterator;
 import org.deeplearning4j.nn.api.OptimizationAlgorithm;
 import org.deeplearning4j.nn.conf.ComputationGraphConfiguration;
 import org.deeplearning4j.nn.conf.MultiLayerConfiguration;
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
 import org.deeplearning4j.nn.conf.layers.DenseLayer;
-import org.deeplearning4j.nn.conf.layers.DropoutLayer;
 import org.deeplearning4j.nn.conf.layers.OutputLayer;
 import org.deeplearning4j.nn.graph.ComputationGraph;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.deeplearning4j.nn.transferlearning.TransferLearning;
 import org.deeplearning4j.nn.weights.WeightInit;
+import org.deeplearning4j.optimize.listeners.EvaluativeListener;
 import org.deeplearning4j.plot.BarnesHutTsne;
+import org.deeplearning4j.ui.api.UIServer;
+import org.deeplearning4j.ui.model.stats.StatsListener;
+import org.deeplearning4j.ui.model.storage.InMemoryStatsStorage;
+import org.jetbrains.annotations.NotNull;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.data.general.Dataset;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
+import org.nd4j.common.primitives.Pair;
+import org.nd4j.evaluation.classification.Evaluation;
 import org.nd4j.linalg.activations.Activation;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.dataset.DataSet;
+import org.nd4j.linalg.dataset.SplitTestAndTrain;
 import org.nd4j.linalg.dataset.api.iterator.DataSetIterator;
-import org.nd4j.linalg.dataset.api.preprocessor.NormalizerMinMaxScaler;
 import org.nd4j.linalg.dataset.api.preprocessor.NormalizerStandardize;
-import org.nd4j.linalg.factory.NDArrayFactory;
 import org.nd4j.linalg.factory.Nd4j;
-import org.nd4j.linalg.learning.config.AdaDelta;
+import org.nd4j.linalg.learning.config.*;
 import org.nd4j.linalg.lossfunctions.LossFunctions;
-import org.nd4j.nativeblas.Nd4jCuda;
 import smile.clustering.GMeans;
 import smile.clustering.KMeans;
-import smile.clustering.PartitionClustering;
 import smile.manifold.TSNE;
 import smile.plot.swing.Canvas;
 import smile.plot.swing.*;
-import smile.projection.PCA;
 
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class Classifier {
     private long seed = 10123;
     private String[] files;
+    private int EbeddingNum=1000;
 // load and preprocess files from directory
     // Build Deep Network with a bias and an output vector based on the number of nodes
     // save output as in a list of INDArrays
     // Use the the list as input to G/Kmeans clustering
     // Reduce the dimension to 3 and plot using t-SNE
 
-    public Classifier(String[] pdbID) {
-        initialize(pdbID);
-    }
+//    public Classifier(String[] pdbID) {
+//        initialize(pdbID);
+//    }
 
-    private void initialize(String[] pdbID) {
-        this.files = pdbID;
-    }
+//    private void initialize(String[] pdbID) {
+//        this.files = pdbID;
+//    }
 
-    public void startClustering() throws IOException, InterruptedException {
-        List<TSNE> l = new ArrayList<>();
+    private List<INDArray> generateEmbedding(String dir, String[] files) throws IOException, InterruptedException {
+
         List<INDArray> l1 = new ArrayList<>();
         INDArray Ge;
-        for (int i = 1; i < files.length; i++) {
+        AtomicInteger count = new AtomicInteger();
+        List<String> fileList = Arrays.asList(files);
 
-        }
-        for (String file : files) {
-            Ge = getGraphEmbedding(file);
-            l1.add(Ge);
-//            TSNE tsne = Kmeanstsne(Ge);
-//            l.add(tsne);
+        fileList.parallelStream().forEach((file) -> {
+            try {
+                l1.add(getGraphEmbeddingParallel(dir, file));
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            System.out.println("processed file " + count.getAndIncrement() + "/" + files.length);
+        });
 
+
+//        for (String file : files) {
+//            Ge = getGraphEmbeddingParallel(dir, file);
+//            l1.add(Ge);
+//            System.out.println("processed file " + count.getAndIncrement() + "/" + files.length);
+//        }
+        return l1;
+    }
+
+    public void saveInput(String[] dir, String[][] list) throws IOException, InterruptedException {
+        int count = 0;
+
+        List<INDArray> l1 = generateEmbedding(dir[0], list[0]);//non-enzymes
+//        INDArray labelsNonEnzymes = Nd4j.zeros(l1.size(), 1);
+        INDArray labelsNonEnzymes = Nd4j.concat(1, Nd4j.ones(l1.size(), 1), Nd4j.zeros(l1.size(), 1));
+        System.out.println(labelsNonEnzymes);
+        List<INDArray> l2 = generateEmbedding(dir[1], list[1]);// enzymes
+        INDArray labelsEnzymes = Nd4j.concat(1, Nd4j.zeros(l2.size(), 1), Nd4j.ones(l2.size(), 1));
+        System.out.println(labelsEnzymes);
+        l1.addAll(l2);
+
+        INDArray features = Nd4j.concat(0, l1.toArray(new INDArray[l1.size()]));
+        System.out.println(features);
+        INDArray labels = Nd4j.concat(0, labelsNonEnzymes, labelsEnzymes);
+        System.out.println("la " + labels);
+
+        DataSet set = new DataSet(features, labels);
+        set.save(new File("C:\\Users\\CECSAdmin\\OneDrive - University of Tennessee at Chattanooga" +
+                "\\Projects\\ProteinGraph\\exports\\data_150"));
+
+    }
+
+    public void binaryClassification() throws IOException, InterruptedException {
+
+        //Start binary classification
+//        FileDataSetIterator iter = new FileDataSetIterator(
+//                new File("C:\\Users\\CECSAdmin\\OneDrive - University of Tennessee at Chattanooga" +
+//                        "\\Projects\\ProteinGraph\\exports"), false, new Random(), 100, null);
+
+        DataSet alldataset = new DataSet();
+        alldataset.load(new File("C:\\Users\\CECSAdmin\\OneDrive - University of Tennessee at Chattanooga" +
+                "\\Projects\\ProteinGraph\\exports\\data_150"));
+        alldataset.shuffle();
+        alldataset.normalize();
+        SplitTestAndTrain split = alldataset.splitTestAndTrain(0.95);
+        DataSet train = split.getTrain();
+        DataSet test = split.getTest();
+        System.out.println(test);
+        //Initialize the user interface backend
+        UIServer uiServer = UIServer.getInstance();
+
+        //Configure where the network information (gradients, score vs. time etc) is to be stored. Here: store in memory.
+        StatsStorage statsStorage = new InMemoryStatsStorage();         //Alternative: new FileStatsStorage(File), for saving and loading later
+
+        //Attach the StatsStorage instance to the UI: this allows the contents of the StatsStorage to be visualized
+        uiServer.attach(statsStorage);
+        MultiLayerNetwork model = classify();
+        model.setListeners(new StatsListener(statsStorage));
+        model.init();
+
+        for (int i = 0; i < 5000; i++) {
+            model.fit(train);
         }
+
+        System.out.println("\n**************** Example finished ********************");
+        model.save(new File("C:\\Users\\CECSAdmin\\OneDrive - University of Tennessee at Chattanooga" +
+                "\\Projects\\ProteinGraph\\exports\\model_150"));
+//
+//evaluate the model_30 on the test set
+        Evaluation eval = new Evaluation(2);
+        INDArray output = model.output(test.getFeatures());
+        eval.eval(test.getLabels(), output);
+//        log.info(eval.stats());
+
+        System.out.println(eval.stats());
+    }
+
+    public MultiLayerNetwork classify() {
+        int seed = 123;
+        double learningRate = 0.5;
+        int batchSize = 50;
+        int nEpochs = 100;
+
+        int numInputs = 150;
+        int numOutputs = 2;
+        int numHiddenNodes = 150;
+        int numHiddenNodes1 = 150;
+        MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
+                .seed(seed)
+                .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
+                .weightInit(WeightInit.XAVIER)
+//                .op
+//                .updater(new AdaGrad(learningRate))
+                .updater(new Nesterovs(learningRate, 0.5))
+                .list()
+                .layer(new DenseLayer.Builder().nIn(numInputs).nOut(numHiddenNodes)
+                        .activation(Activation.RELU)
+                        .build())
+                .layer(new DenseLayer.Builder().nIn(numHiddenNodes).nOut(numHiddenNodes1)
+                        .activation(Activation.RELU)
+                        .build())
+//                .layer(new DenseLayer.Builder().nIn(numHiddenNodes1).nOut(numHiddenNodes1)
+//                        .activation(Activation.RELU)
+//                        .build())
+                .layer(new OutputLayer.Builder(LossFunctions.LossFunction.NEGATIVELOGLIKELIHOOD)
+                        .weightInit(WeightInit.XAVIER)
+                        .activation(Activation.SOFTMAX)
+                        .nIn(numHiddenNodes1).nOut(numOutputs).build())
+                .build();
+        //Then add the StatsListener to collect this information from the network, as it trains
+        MultiLayerNetwork model = new MultiLayerNetwork(conf);
+        return model;
+    }
+
+    public void startClustering(String dir, String files[]) throws IOException, InterruptedException {
+        List<TSNE> l = new ArrayList<>();
+        List<INDArray> l1 = generateEmbedding(dir, files);
+        INDArray Ge;
         Ge = Nd4j.concat(0, l1.toArray(new INDArray[l1.size()]));
         System.out.println(Ge);
         TSNE tsne = Kmeanstsne(Ge);
@@ -154,11 +284,13 @@ public class Classifier {
         }
     }
 
-    public INDArray getGraphEmbedding(String filename) throws IOException, InterruptedException {
+    private INDArray getGraphEmbedding(String dir, String filename) throws IOException, InterruptedException {
+//        DataSet dataset =
+//                readData("C:\\Users\\CECSAdmin" +
+//                        "\\OneDrive - University of Tennessee at Chattanooga" +
+//                        "\\Projects\\ProteinGraph\\exports\\" + filename + ".csv");
         DataSet dataset =
-                readData("C:\\Users\\CECSAdmin" +
-                        "\\OneDrive - University of Tennessee at Chattanooga" +
-                        "\\Projects\\ProteinGraph\\exports\\" + filename + ".csv");
+                readData(dir + filename + ".csv");
         List<DataSet> set = dataset.asList();
         System.out.println("input name: " + filename);
         for (int i = 0; i < set.size(); i++) {
@@ -203,7 +335,51 @@ public class Classifier {
         for (DataSet s : set) {
             Ge = Ge.add(s.getFeatures());
         }
-        return generateEmbedding(new DataSet(Ge, Ge), 30);
+        return getEmbedding(new DataSet(Ge, Ge), 150);
+    }
+
+    private INDArray getGraphEmbeddingParallel(String dir, String filename) throws IOException, InterruptedException {
+//        DataSet dataset =
+//                readData("C:\\Users\\CECSAdmin" +
+//                        "\\OneDrive - University of Tennessee at Chattanooga" +
+//                        "\\Projects\\ProteinGraph\\exports\\" + filename + ".csv");
+        DataSet dataset =
+                readData(dir + filename + ".csv");
+        List<DataSet> set = dataset.asList();
+//        System.out.println("input name: " + filename);
+        set.parallelStream().forEach((data) -> {
+//                    System.out.println("features");
+//                    System.out.println(data_30.getFeatures());
+                    INDArray Hv = Nd4j.zeros(data.numInputs());
+
+                    // get neighbors of i
+                    ArrayList<Integer> neighbors = new ArrayList<>();
+                    for (int j = 0; j < data.getFeatures().columns() - 25; j++) {
+                        if (data.getFeatures().getDouble(j) > 0) {
+                            if (j != set.indexOf(data))
+                                neighbors.add(j);
+                        }
+                    }
+                    // message passing phase
+                    for (Integer n : neighbors) {
+                        INDArray message = buildMessagePassingModel(set.get(n.intValue()), set.size());
+                        Hv = Hv.add(message);
+                    }
+                    // Update Phase
+                    Hv.add(data.getFeatures());
+                    DataSet set1 = new DataSet(Hv, Hv);
+                    INDArray update = buildUpdatePhaseModel(set1, set.size());
+                    set.get(set.indexOf(data)).setFeatures(update);
+                }
+        );
+
+        //Graph Embedding
+        INDArray Ge = Nd4j.zeros(set.get(0).numInputs());
+        Ge = set.parallelStream().reduce(Ge, (ge, data) -> ge.add(data.getFeatures()), INDArray::add);
+//        for (DataSet s : set) {
+//            Ge = Ge.add(s.getFeatures());
+//        }
+        return getEmbedding(new DataSet(Ge, Ge), EbeddingNum);
     }
 
 
@@ -216,34 +392,20 @@ public class Classifier {
                 .seed(seed)
                 .weightInit(WeightInit.XAVIER)
                 .l2(0.001)
-                .updater(new AdaDelta()) // try other updaters later
+                .updater(new Nesterovs()) // try other updaters later
                 .list()
-
-//                .graphBuilder()
-//                .addInputs("input")
-//                .addLayer("L1", new DenseLayer.Builder().nIn(featureSize).nOut(30)
-//                        .activation(Activation.RELU)
-//                        .build(), "input")
                 .layer(new DenseLayer.Builder().nIn(featureSize).nOut(featureSize)
                         .activation(Activation.RELU)
                         .build())
                 .layer(new DenseLayer.Builder().nIn(featureSize).nOut(featureSize)
                         .activation(Activation.RELU)
                         .build())
-//                .layer(new DropoutLayer.Builder().dropOut(0.5).nIn(featureSize).nOut(featureSize).build())// Just for test
                 .layer(new DenseLayer.Builder().nIn(featureSize).nOut(featureSize)
                         .activation(Activation.RELU)
                         .build())
                 .layer(new OutputLayer.Builder(LossFunctions.LossFunction.MSE)
                         .activation(Activation.SOFTMAX)
                         .nIn(featureSize).nOut(featureSize).build())
-//                        .name("enc2")
-//                        .build())
-//                .addLayer("L2", new OutputLayer.Builder(LossFunctions.LossFunction.MSE)
-//                        .activation(Activation.SOFTMAX)
-//                        .name("last")
-//                        .nIn(30).nOut(featureSize).build(), "L1")
-//                .setOutputs("L2")
                 .build();
 
         MultiLayerNetwork net = new MultiLayerNetwork(model);
@@ -256,7 +418,7 @@ public class Classifier {
 //        n.fit(set);
 //        n.transform(set);
 //        System.out.println("My set "+set);
-        net.setEpochCount(10);
+//        net.setEpochCount(10);
         net.fit(set);
 //        }
 //        ComputationGraph tl = new TransferLearning.GraphBuilder(net)
@@ -276,14 +438,14 @@ public class Classifier {
                 .updater(new AdaDelta()) // try other updaters later
                 .list()
                 .layer(new DenseLayer.Builder().nIn(featureSize).nOut(featureSize)
-                        .activation(Activation.RELU)
+                        .activation(Activation.SIGMOID)
                         .build())
 //                .layer(new DropoutLayer.Builder().dropOut(0.5).nIn(featureSize).nOut(featureSize).build())// Just for test
 //                .layer(new DenseLayer.Builder().nIn(numNodes).nOut(numNodes)
 //                        .activation(Activation.RELU)
 //                        .build())
                 .layer(new OutputLayer.Builder(LossFunctions.LossFunction.MSE)
-                        .activation(Activation.SOFTMAX)
+                        .activation(Activation.SIGMOID)
                         .nIn(featureSize).nOut(featureSize).build())
                 .build();
 
@@ -294,12 +456,12 @@ public class Classifier {
 //        s.setFeatures(set);
 //        NormalizerStandardize n = new NormalizerStandardize();
 //        n.transform(set);
-        net.setEpochCount(10);
+//        net.setEpochCount(10);
         net.fit(set);
         return net.output(set.getFeatures());
     }
 
-    private INDArray generateEmbedding(DataSet set, int sizes) {
+    private INDArray getEmbedding(DataSet set, int sizes) {
         int featureSize = set.numInputs();
 //        System.out.println(featureSize);
         ComputationGraphConfiguration model = new NeuralNetConfiguration.Builder()
@@ -331,15 +493,15 @@ public class Classifier {
 //        net.setEpochCount(5000);
 //        DataSet s = new DataSet();
 //        s.setFeatures(set.getFeatures());
-        for (int i = 0; i < 10; i++) {
+//        for (int i = 0; i < 1000; i++) {
             net.fit(set);
-        }
+//        }
         ComputationGraph tl = new TransferLearning.GraphBuilder(net)
                 .setFeatureExtractor("L1")
                 .removeVertexAndConnections("output")
                 .addLayer("output", new OutputLayer.Builder()
                         .nIn(sizes).nOut(sizes)
-                        .activation(Activation.SOFTMAX).build(), "L1")
+                        .activation(Activation.IDENTITY).build(), "L1")
                 .setOutputs("output")
                 .setInputs("input")
                 .build();
@@ -350,14 +512,14 @@ public class Classifier {
     }
 
     private DataSet readData(String directory) throws IOException, InterruptedException {
-        int batchSize = 1000;
+        int batchSize = 1200;
         RecordReader rr = new CSVRecordReader();
         NormalizerStandardize normaliser = new NormalizerStandardize();
         rr.initialize(new FileSplit(new File(directory)));
 
         DataSetIterator iter = new RecordReaderDataSetIterator.Builder(rr, batchSize).build();
-//        normaliser.fit(iter);
-//        iter.setPreProcessor(normaliser);
+        normaliser.fit(iter);
+        iter.setPreProcessor(normaliser);
 //        new MapFileSequenceRecordReader();
         return iter.next();
     }
