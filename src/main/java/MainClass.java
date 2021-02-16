@@ -1,6 +1,8 @@
 import org.w3c.dom.Node;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.*;
 
 public class MainClass {
@@ -226,6 +228,52 @@ public class MainClass {
                 "3SEB", "3SEM", "3SSI", "3VUB", "451C", "4BCL", "4BJL", "4ICB", "4LVE", "4MON", "4OVO", "4PAL", "5PTI",
                 "7ABP", "7AME", "7PAZ", "7PCY", "7PTI", "7RXN", "9WGA"
         };
+//        Arrays.asList(nonenzyme).parallelStream().forEach((id)->{
+//
+//
+//            Preprocess preprocess = new Preprocess(id, "A");
+//            Map<Integer, AminoAcid> aminoAcids = preprocess.getAminoAcidSet();//
+//            Map<AminoAcid, ArrayList<AminoAcid>> aminoAcidsHBonds = preprocess.getBondArrayListMap();//
+//
+////        System.out.println(preprocess.printDSSPFormat());
+//            ProteinGraph proteinGraph = new ProteinGraph(Bond.class);
+//            proteinGraph.addAAwithPeptideBonds(aminoAcids);////
+//            proteinGraph.addHydrogenBonds(aminoAcidsHBonds);//
+//
+////        System.out.println(proteinGraph.findMaximumCliques());
+////        proteinGraph.visualize("Visualizer");
+////        proteinGraph.exportGraph(ProteinGraph.EXPORT_TYPE_DOT, directory + id);
+//            try {
+//                proteinGraph.exportGraph(ProteinGraph.EXPORT_TYPE_CSV, "exports/non-enzyme/" + id);
+//            } catch (FileNotFoundException e) {
+//                e.printStackTrace();
+//            }
+////        proteinGraph.exportGraph(ProteinGraph.EXPORT_TYPE_MATRIX, directory + pdbID[0]);
+//        });
+
+//        Arrays.asList(enzyme).parallelStream().forEach((id)->{
+//
+//
+//            Preprocess preprocess = new Preprocess(id, "A");
+//            Map<Integer, AminoAcid> aminoAcids = preprocess.getAminoAcidSet();//
+//            Map<AminoAcid, ArrayList<AminoAcid>> aminoAcidsHBonds = preprocess.getBondArrayListMap();//
+//
+////        System.out.println(preprocess.printDSSPFormat());
+//            ProteinGraph proteinGraph = new ProteinGraph(Bond.class);
+//            proteinGraph.addAAwithPeptideBonds(aminoAcids);////
+//            proteinGraph.addHydrogenBonds(aminoAcidsHBonds);//
+//
+////        System.out.println(proteinGraph.findMaximumCliques());
+////        proteinGraph.visualize("Visualizer");
+////        proteinGraph.exportGraph(ProteinGraph.EXPORT_TYPE_DOT, directory + id);
+//            try {
+//                proteinGraph.exportGraph(ProteinGraph.EXPORT_TYPE_CSV, "exports/enzyme/" + id);
+//            } catch (FileNotFoundException e) {
+//                e.printStackTrace();
+//            }
+////        proteinGraph.exportGraph(ProteinGraph.EXPORT_TYPE_MATRIX, directory + pdbID[0]);
+//        });
+
 
 //        for (String id : nonenzyme) {
 //
@@ -246,16 +294,18 @@ public class MainClass {
 ////        proteinGraph.exportGraph(ProteinGraph.EXPORT_TYPE_MATRIX, directory + pdbID[0]);
 //        }
         String[] dirs = {
-                "C:\\Users\\CECSAdmin\\OneDrive - University of Tennessee at Chattanooga" +
-                "\\Projects\\ProteinGraph\\exports\\non-enzyme\\",
-                "C:\\Users\\CECSAdmin\\OneDrive - University of Tennessee at Chattanooga" +
-                "\\Projects\\ProteinGraph\\exports\\enzyme\\"};
+                "/Users/admin/Documents/Java Projects/ProteinGraphModelling/exports/enzyme/",
+//                "C:\\Users\\CECSAdmin\\OneDrive - University of Tennessee at Chattanooga" +
+//                "\\Projects\\ProteinGraph\\exports\\non-enzyme\\",
+//                "C:\\Users\\CECSAdmin\\OneDrive - University of Tennessee at Chattanooga" +
+//                "\\Projects\\ProteinGraph\\exports\\enzyme\\",
+                "/Users/admin/Documents/Java Projects/ProteinGraphModelling/exports/non-enzyme/"};
 
         String[][] filenames={nonenzyme,enzyme};
         try {
-            new Classifier().saveInput(dirs,filenames);
-//            new Classifier().binaryClassification();
-        } catch (InterruptedException e) {
+//            new Classifier().saveInput(dirs,filenames);
+            new Classifier().classifyL();
+        } catch (InterruptedException | URISyntaxException e) {
             e.printStackTrace();
         }
     }
