@@ -6,9 +6,11 @@ import java.util.Iterator;
 
 public class CustomCSVExporter {
     int featuresize = 0;
+    String label = "";
 
-    public CustomCSVExporter(int featuresize) {
+    public CustomCSVExporter(int featuresize, String label) {
         this.featuresize = featuresize;
+        this.label = label;
     }
 
     public void exportGraph(Graph<AminoAcid, Bond> g, PrintStream writer) {
@@ -27,9 +29,7 @@ public class CustomCSVExporter {
                 Bond e = g.getEdge(v, u);
                 if (v.equals(u)) {
                     System.out.print("1"); // self loops
-                } else
-
-                    if (e == null) {
+                } else if (e == null) {
 //                    this.exportEscapedField(out, "0");
                     System.out.print("0");
                 } else {
@@ -68,6 +68,7 @@ public class CustomCSVExporter {
 
 
     }
+
     public void exportGraph(Graph<AminoAcid, Bond> g, PrintWriter out, String delimiter) {
 
         int n = g.vertexSet().size();
@@ -76,7 +77,9 @@ public class CustomCSVExporter {
         System.out.println("Graph Size is " + n + "x" + (n + featuresize));
 //        out.println("Graph Size is 0 " + n + "x" + (n + featuresize)+" that is each vertices has ");
         while (vertexIt1.hasNext()) { // looping through each vertex ie N rows
-
+            // label at index 0;
+//            this.exportEscapedField(out, label);
+//            this.exportEscapedField(out, delimiter);
             AminoAcid v = (AminoAcid) vertexIt1.next();
             Iterator vertexIt2 = g.vertexSet().iterator();
             int i = 0;
@@ -88,7 +91,7 @@ public class CustomCSVExporter {
 //                } else
 
                 if (e == null) {
-                   this.exportEscapedField(out, "0");
+                    this.exportEscapedField(out, "0");
 
                 } else {
 
@@ -128,8 +131,9 @@ public class CustomCSVExporter {
 
         out.close();
     }
+
     private void exportEscapedField(PrintWriter out, String field) {
-        out.print(field );
-       // out.print(Utils.escapeDSV(field, ','));
+        out.print(field);
+        // out.print(Utils.escapeDSV(field, ','));
     }
 }

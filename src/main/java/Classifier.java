@@ -77,20 +77,8 @@ import java.util.stream.StreamSupport;
 public class Classifier {
     private long seed = 10123;
     private String[] files;
-    private int EbeddingNum = 1000;
-// load and preprocess files from directory
-    // Build Deep Network with a bias and an output vector based on the number of nodes
-    // save output as in a list of INDArrays
-    // Use the the list as input to G/Kmeans clustering
-    // Reduce the dimension to 3 and plot using t-SNE
-
-//    public Classifier(String[] pdbID) {
-//        initialize(pdbID);
-//    }
-
-//    private void initialize(String[] pdbID) {
-//        this.files = pdbID;
-//    }
+    private int EbeddingNum = 2050;
+    private int iteration = 1;
 
     private List<INDArray> generateEmbedding(String dir, String[] files) throws IOException, InterruptedException {
 
@@ -122,11 +110,11 @@ public class Classifier {
     public void saveInput(String[] dir, String[][] list) throws IOException, InterruptedException {
         int count = 0;
 
-        List<INDArray> l1 = generateEmbedding(dir[0], list[0]);//non-enzymes
+        List<INDArray> l1 = generateEmbedding(dir[0], list[0]);//enzymes
 //        INDArray labelsNonEnzymes = Nd4j.zeros(l1.size(), 1);
         INDArray labelsNonEnzymes = Nd4j.concat(1, Nd4j.ones(l1.size(), 1), Nd4j.zeros(l1.size(), 1));
         System.out.println(labelsNonEnzymes);
-        List<INDArray> l2 = generateEmbedding(dir[1], list[1]);// enzymes
+        List<INDArray> l2 = generateEmbedding(dir[1], list[1]);// non-enzymes
         INDArray labelsEnzymes = Nd4j.concat(1, Nd4j.zeros(l2.size(), 1), Nd4j.ones(l2.size(), 1));
         System.out.println(labelsEnzymes);
         l1.addAll(l2);
@@ -138,7 +126,7 @@ public class Classifier {
 
         DataSet set = new DataSet(features, labels);
         set.save(new File("C:\\Users\\CECSAdmin\\OneDrive - University of Tennessee at Chattanooga" +
-                "\\Projects\\ProteinGraph\\exports\\data_150"));
+                "\\Projects\\ProteinGraph\\Preprocessed\\data"));
 
     }
 
@@ -151,7 +139,7 @@ public class Classifier {
 
         DataSet alldataset = new DataSet();
         alldataset.load(new File("C:\\Users\\CECSAdmin\\OneDrive - University of Tennessee at Chattanooga" +
-                "\\Projects\\ProteinGraph\\exports\\data_150"));
+                "\\Projects\\ProteinGraph\\Preprocessed\\data"));
         alldataset.shuffle();
         alldataset.normalize();
         SplitTestAndTrain split = alldataset.splitTestAndTrain(0.95);
@@ -160,22 +148,18 @@ public class Classifier {
         System.out.println(test);
         //Initialize the user interface backend
         UIServer uiServer = UIServer.getInstance();
-
         //Configure where the network information (gradients, score vs. time etc) is to be stored. Here: store in memory.
         StatsStorage statsStorage = new InMemoryStatsStorage();         //Alternative: new FileStatsStorage(File), for saving and loading later
-
         //Attach the StatsStorage instance to the UI: this allows the contents of the StatsStorage to be visualized
         uiServer.attach(statsStorage);
         long nRows = train.numInputs();
         long nCols = train.getFeatures().columns();
         System.out.println("nRows= " + nRows + "nCols= " + nCols);
-        MultiLayerNetwork model = mpnn(nRows, nCols);
+        MultiLayerNetwork model = model();//(nRows, nCols);
         model.setListeners(new StatsListener(statsStorage));
         model.init();
-
-        for (int i = 0; i < 1000; i++) {
-            model.fit(train);
-        }
+        model.setEpochCount(1000);
+        model.fit(train);
 
 //        System.out.println("\n**************** Example finished ********************");
 //        model.save(new File("C:\\Users\\CECSAdmin\\OneDrive - University of Tennessee at Chattanooga" +
@@ -190,16 +174,14 @@ public class Classifier {
         System.out.println(eval.stats());
     }
 
-    public MultiLayerNetwork classify() {
+    public MultiLayerNetwork model() {
         int seed = 123;
         double learningRate = 0.5;
-        int batchSize = 50;
-        int nEpochs = 100;
 
-        int numInputs = 150;
+        int numInputs = EbeddingNum;
         int numOutputs = 2;
-        int numHiddenNodes = 150;
-        int numHiddenNodes1 = 150;
+        int numHiddenNodes = 1000;
+        int numHiddenNodes1 = 512;
         MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
                 .seed(seed)
                 .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
@@ -225,101 +207,6 @@ public class Classifier {
         //Then add the StatsListener to collect this information from the network, as it trains
         MultiLayerNetwork model = new MultiLayerNetwork(conf);
         return model;
-    }
-
-    public void classifyL() throws IOException, InterruptedException, URISyntaxException {
-//        FileDataSetIterator iter = new FileDataSetIterator(
-//                new File("C:\\Users\\CECSAdmin\\OneDrive - University of Tennessee at Chattanooga" +
-//                        "\\Projects\\ProteinGraph\\exports"), false, new Random(), 100, null);
-
-//        CSVSequenceRecordReader csvrr = new CSVSequenceRecordReader();
-//        FileRecordReader csvrr = new FileRecordReader();
-//
-//        csvrr.initialize(new FileSplit(new File("/Users/admin/Documents/Java Projects/ProteinGraphModelling/exports/")));
-////        DataInputStream datainput = new DataInputStream(
-////                new FileInputStream("/Users/admin/Documents/Java Projects/ProteinGraphModelling/exports/"));
-//        ParentPathLabelGenerator labelGenerator = new ParentPathLabelGenerator();
-//        labelGenerator.inferLabelClasses();
-////        labelGenerator.getLabelForPath(new URI("/Users/admin/Documents/Java Projects/ProteinGraphModelling/exports/"));
-        FileSplit split = new FileSplit(new File("/Users/admin/Documents/Java Projects/ProteinGraphModelling/exports/"));
-//
-        Iterator<URI> it = split.locationsIterator();//cationsPathIterator();
-//        it.next();
-//        List<String> label = new LinkedList<>();
-////        csvrr.setLabels();
-        List<DataSet> files = new LinkedList<>();
-        Iterable<URI> iterable = () -> it;
-        List<URI> actualList = StreamSupport
-                .stream(iterable.spliterator(), false)
-                .collect(Collectors.toList());
-//        actualList.parallelStream().forEach(
-//                (s) -> {
-//                    DataSet ss = null;
-//                    try {
-//                        ss = readData(s.getPath());
-//                    } catch (IOException e) {
-//                        e.printStackTrace();
-//                    } catch (InterruptedException e) {
-//                        e.printStackTrace();
-//                    }
-//                    INDArray labels = null;
-//                    if (s.getPath().contains("non-enzyme")) {
-//                        labels = Nd4j.concat(1, Nd4j.ones(1, 1), Nd4j.zeros(1, 1));
-//
-//                    } else {
-//                        labels = Nd4j.concat(1, Nd4j.zeros(1, 1), Nd4j.ones(1, 1));
-//                    }
-////                    ss.setLabels(labels);
-//
-//                    ss.save(new File(s.getPath().replaceAll("\\.csv", "")
-//                            .replaceAll("exports", "Preprocessed")));
-////                    files.add(ss);
-//                    System.out.println(ss.getFeatures());
-//                }
-//        );
-//        while (it.hasNext()){
-//
-////        label.add(labelGenerator.getLabelForPath(it.next()).toString());
-////        files.add(new File(it.next()));
-//
-////        csvrr.sequenceRecord(uri,datainput);
-////        while (csvrr.hasNext()){
-////            System.out.println("Label: "+
-////                    labelGenerator.getLabelForPath(it.next())
-//////                    csvrr.
-////            );
-//            String path=it.next().getPath();
-//            DataSet s=readData();
-//            files.add(s);
-//        }
-//        csvrr.setLabels(label);
-
-//        System.out.println("Label: "+csvrr.getLabels());
-//        System.out.println("Label: "+csvrr.getLabels());
-//        System.out.println("Label: "+readData("/Users/admin/Documents/Java Projects/ProteinGraphModelling/exports/"));
-
-//        DataSetIterator ite = new RecordReaderDataSetIterator.Builder(csvrr,1 )
-////                .classification(0, 2)
-//                .build();
-
-//        DataSetIterator ite= new FileSplitParallelDataSetIterator
-//                (new File("/Users/admin/Documents/Java Projects/ProteinGraphModelling/exports/"),
-//                        "^*.csv",new DataSetDeserializer());
-
-//        MultiDataSet set = new MultiDataSet();
-//        set.load(new File("/Users/admin/Documents/Java Projects/ProteinGraphModelling/exports/enzyme/1A2J.csv"));
-
-//       CSVRecordReader set=new CSVRecordReader();
-//        set.initialize(split);
-
-//        FileDataSetIterator dIte = new FileDataSetIterator(
-//                new File("/Users/admin/Documents/Java Projects/ProteinGraphModelling/Preprocessed/"), 1);
-////        dIte.setPreProcessor(new NormalizerStandardize());
-
-        DataSet s = new DataSet();
-        s.load(new File("/Users/admin/Documents/Java Projects/ProteinGraphModelling/Preprocessed/enzyme/1A4S"));
-
-        System.out.println("Label: " + s.getLabels());
     }
 
     public MultiLayerNetwork mpnn(long nRows, long nCol) {
@@ -497,38 +384,35 @@ public class Classifier {
                 readData(dir + filename + ".csv");
         List<DataSet> set = dataset.asList();
 //        System.out.println("input name: " + filename);
-        set.parallelStream().forEach((data) -> {
+        for (int i = 0; i < iteration; i++) {
+            set.parallelStream().forEach((data) -> {
 //                    System.out.println("features");
 //                    System.out.println(data_30.getFeatures());
-                    INDArray Hv = Nd4j.zeros(data.numInputs());
+                INDArray Hv = Nd4j.zeros(data.numInputs());
 
-                    // get neighbors of i
-                    ArrayList<Integer> neighbors = new ArrayList<>();
-                    for (int j = 0; j < data.getFeatures().columns() - 25; j++) {
-                        if (data.getFeatures().getDouble(j) > 0) {
-                            if (j != set.indexOf(data))
-                                neighbors.add(j);
-                        }
+                // get neighbors of i
+                ArrayList<Integer> neighbors = new ArrayList<>();
+                for (int j = 1; j < data.getFeatures().columns() - 25; j++) {
+                    if (data.getFeatures().getDouble(j) > 0) {
+                        if (j != set.indexOf(data))
+                            neighbors.add(j);
                     }
-                    // message passing phase
-                    for (Integer n : neighbors) {
-                        INDArray message = buildMessagePassingModel(set.get(n.intValue()), set.size());
-                        Hv = Hv.add(message);
-                    }
-                    // Update Phase
-                    Hv.add(data.getFeatures());
-                    DataSet set1 = new DataSet(Hv, Hv);
-                    INDArray update = buildUpdatePhaseModel(set1, set.size());
-                    set.get(set.indexOf(data)).setFeatures(update);
                 }
-        );
-
+                // message passing phase
+                for (Integer n : neighbors) {
+                    INDArray message = buildMessagePassingModel(set.get(n.intValue()), set.size());
+                    Hv = Hv.add(message);
+                }
+                // Update Phase
+                Hv.add(data.getFeatures());
+                DataSet set1 = new DataSet(Hv, Hv);
+                INDArray update = buildUpdatePhaseModel(set1, set.size());
+                set.get(set.indexOf(data)).setFeatures(update);
+            });
+        }
         //Graph Embedding
         INDArray Ge = Nd4j.zeros(set.get(0).numInputs());
         Ge = set.parallelStream().reduce(Ge, (ge, data) -> ge.add(data.getFeatures()), INDArray::add);
-//        for (DataSet s : set) {
-//            Ge = Ge.add(s.getFeatures());
-//        }
         return getEmbedding(new DataSet(Ge, Ge), EbeddingNum);
     }
 
@@ -557,27 +441,10 @@ public class Classifier {
                         .activation(Activation.SOFTMAX)
                         .nIn(featureSize).nOut(featureSize).build())
                 .build();
-
         MultiLayerNetwork net = new MultiLayerNetwork(model);
         net.init();
-//        net.setEpochCount(5000);
-//        DataSet s = new DataSet();
-//        s.setFeatures(set.getFeatures());
-//        for (int i = 0; i <2 ; i++) {
-//        NormalizerMinMaxScaler n = new NormalizerMinMaxScaler();
-//        n.fit(set);
-//        n.transform(set);
-//        System.out.println("My set "+set);
-//        net.setEpochCount(10);
+        net.setEpochCount(100);
         net.fit(set);
-        net.fit();
-//        }
-//        ComputationGraph tl = new TransferLearning.GraphBuilder(net)
-//                .setFeatureExtractor("L1")
-//                .removeVertexAndConnections("L2")
-//                .build();
-//
-//        tl.fit(set);
         return net.output(set.getFeatures());
     }
 
@@ -591,10 +458,6 @@ public class Classifier {
                 .layer(new DenseLayer.Builder().nIn(featureSize).nOut(featureSize)
                         .activation(Activation.SIGMOID)
                         .build())
-//                .layer(new DropoutLayer.Builder().dropOut(0.5).nIn(featureSize).nOut(featureSize).build())// Just for test
-//                .layer(new DenseLayer.Builder().nIn(numNodes).nOut(numNodes)
-//                        .activation(Activation.RELU)
-//                        .build())
                 .layer(new OutputLayer.Builder(LossFunctions.LossFunction.MSE)
                         .activation(Activation.IDENTITY)
                         .nIn(featureSize).nOut(featureSize).build())
@@ -602,12 +465,8 @@ public class Classifier {
 
         MultiLayerNetwork net = new MultiLayerNetwork(model);
         net.init();
-//        net.setEpochCount(5000);
+        net.setEpochCount(100);
         DataSet s = new DataSet();
-//        s.setFeatures(set);
-//        NormalizerStandardize n = new NormalizerStandardize();
-//        n.transform(set);
-//        net.setEpochCount(10);
         net.fit(set);
         return net.output(set.getFeatures());
     }
@@ -633,7 +492,7 @@ public class Classifier {
 //                        .activation(Activation.RELU)
 //                        .name("enc2")
 //                        .build())
-                .addLayer("output", new OutputLayer.Builder(LossFunctions.LossFunction.MSE)
+                .addLayer("output", new OutputLayer.Builder(LossFunctions.LossFunction.MCXENT)
                         .activation(Activation.SOFTMAX)
                         .nIn(sizes).nOut(featureSize).build(), "L1")
                 .setOutputs("output")
@@ -641,12 +500,7 @@ public class Classifier {
 
         ComputationGraph net = new ComputationGraph(model);
         net.init();
-//        net.setEpochCount(5000);
-//        DataSet s = new DataSet();
-//        s.setFeatures(set.getFeatures());
-//        for (int i = 0; i < 1000; i++) {
         net.fit(set);
-//        }
         ComputationGraph tl = new TransferLearning.GraphBuilder(net)
                 .setFeatureExtractor("L1")
                 .removeVertexAndConnections("output")
@@ -677,14 +531,6 @@ public class Classifier {
         return iter.next();
     }
 
-    private void computeEmbeddingPerGraph() {
-
-    }
-
-    private void updateAllEmbedding() {
-
-    }
-
     private void clusterWithKmeans(int clusterCount, int maxIterationCount, List<INDArray> vectors) throws IOException {
         //1. create a kmeanscluster instance
         String distanceFunction = "cosinesimilarity";
@@ -709,84 +555,5 @@ public class Classifier {
 
 //        plotdata(cs.getClusters());
 
-    }
-
-    private void plotdata(double[][] clusters) {
-        XYSeriesCollection c = new XYSeriesCollection();
-
-
-        int dscounter = 1; //use to name the dataseries
-        XYSeries series = new XYSeries("S" + dscounter);
-        for (double[] ds : clusters) {
-//            INDArray features = ds.getCenter().getArray();
-//            INDArray outputs = ds.getCenter().getArray();
-
-            int nRows = ds.length;
-
-            for (int i = 0; i < nRows; i++) {
-                series.add(ds[i], ds[i]);
-            }
-
-            c.addSeries(series);
-        }
-
-        String title = "title";
-        String xAxisLabel = "xAxisLabel";
-        String yAxisLabel = "yAxisLabel";
-        PlotOrientation orientation = PlotOrientation.VERTICAL;
-        boolean legend = false;
-        boolean tooltips = false;
-        boolean urls = false;
-        //noinspection ConstantConditions
-        JFreeChart chart = ChartFactory.createScatterPlot(title, xAxisLabel, yAxisLabel, c, orientation, legend, tooltips, urls);
-        JPanel panel = new ChartPanel(chart);
-
-        JFrame f = new JFrame();
-        f.add(panel);
-        f.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-//        f.pack();
-        f.setTitle("Training Data");
-
-        f.setVisible(true);
-
-    }
-
-    private void plotdata(ArrayList<DataSet> DataSetList) {
-        XYSeriesCollection c = new XYSeriesCollection();
-
-
-        int dscounter = 1; //use to name the dataseries
-        XYSeries series = new XYSeries("S" + dscounter);
-        for (DataSet ds : DataSetList) {
-            INDArray features = ds.getFeatures();
-            INDArray outputs = ds.getLabels();
-
-            int nRows = features.rows();
-
-//            for (int i = 0; i < nRows; i++) {
-            series.add(features.getDouble(), outputs.getDouble());
-//            }
-
-
-        }
-        c.addSeries(series);
-        String title = "title";
-        String xAxisLabel = "xAxisLabel";
-        String yAxisLabel = "yAxisLabel";
-        PlotOrientation orientation = PlotOrientation.VERTICAL;
-        boolean legend = false;
-        boolean tooltips = false;
-        boolean urls = false;
-        //noinspection ConstantConditions
-        JFreeChart chart = ChartFactory.createScatterPlot(title, xAxisLabel, yAxisLabel, c, orientation, legend, tooltips, urls);
-        JPanel panel = new ChartPanel(chart);
-
-        JFrame f = new JFrame();
-        f.add(panel);
-        f.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-//        f.pack();
-        f.setTitle("Training Data");
-
-        f.setVisible(true);
     }
 }

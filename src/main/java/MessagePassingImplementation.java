@@ -1,3 +1,4 @@
+import lombok.Data;
 import org.deeplearning4j.nn.conf.MultiLayerConfiguration;
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
 import org.deeplearning4j.nn.conf.layers.DenseLayer;
@@ -16,13 +17,17 @@ import org.nd4j.linalg.dataset.DataSet;
 import org.nd4j.linalg.factory.Nd4j;
 import org.nd4j.linalg.learning.config.AdaDelta;
 import org.nd4j.linalg.lossfunctions.LossFunctions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
-public class MessagePassingImplementation extends BaseLayer<MessagePassingLayer> {
 
+
+public class MessagePassingImplementation extends BaseLayer<MessagePassingLayer> {
+    private static Logger logger = LoggerFactory.getLogger(MessagePassingImplementation.class);
     public MessagePassingImplementation(NeuralNetConfiguration conf, DataType dataType) {
         super(conf, dataType);
     }
@@ -34,10 +39,11 @@ public class MessagePassingImplementation extends BaseLayer<MessagePassingLayer>
     @Override
     public INDArray activate(INDArray input, boolean training, LayerWorkspaceMgr workspaceMgr) {
 
-        INDArray output = new NDArray();//preOutput(training, workspaceMgr);// this is a matrix of the updated feature vectors of each vertex
+        INDArray output = preOutput(training, workspaceMgr);// this is a matrix of the updated feature vectors of each vertex
 
-        long nRows = input.shape()[0];
-        long featureSize = input.shape()[1];
+        long nRows = 0;//input.shape()[0];
+        logger.debug("Info log message-> nrow= "+nRows);
+        long featureSize = output.shape()[1];
         List<INDArray> vertexFeatures = new LinkedList<>();
 
         for (long i = 0; i < nRows; i++) {
@@ -90,7 +96,7 @@ public class MessagePassingImplementation extends BaseLayer<MessagePassingLayer>
 
                     // get neighbors of v
                     ArrayList<Integer> neighbors = new ArrayList<>();
-                    for (int j = 0; j < data.columns() - 25; j++) {
+                    for (int j = 1; j < data.columns() - 25; j++) {
                         if (data.getDouble(j) > 0) {
                             if (j != vertexFeatures.indexOf(data))
                                 neighbors.add(j);

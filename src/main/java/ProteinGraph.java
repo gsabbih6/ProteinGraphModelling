@@ -31,14 +31,14 @@ public class ProteinGraph extends DefaultUndirectedWeightedGraph<AminoAcid, Bond
         super(edgeClass);
     }
 
-    public void exportGraph(String supportedType, String filename) throws FileNotFoundException {
+    public void exportGraph(String supportedType, String filename,String label) throws FileNotFoundException {
         this.filename = filename;
         switch (supportedType) {
             case EXPORT_TYPE_CSV:
-                exportAsCSV(this);
+                exportAsCSV(this,label);
                 break;
             case EXPORT_TYPE_MATRIX:
-                exportAsMatrix(this);
+                exportAsMatrix(this,label);
                 break;
             case EXPORT_TYPE_DOT:
                 exportAsDOT(this);
@@ -56,17 +56,17 @@ public class ProteinGraph extends DefaultUndirectedWeightedGraph<AminoAcid, Bond
 //        mxPngImageEncoder
     }
 
-    private void exportAsMatrix(ProteinGraph proteinGraph) throws FileNotFoundException {
+    private void exportAsMatrix(ProteinGraph proteinGraph,String label) throws FileNotFoundException {
 //        new MatrixExporter().exportAdjacencyMatrix( new PrintWriter(out), proteinGraph );
         PrintWriter out = new PrintWriter(filename + ".txt");
-        new CustomCSVExporter(25).exportGraph(proteinGraph, out, " ");
+        new CustomCSVExporter(25,label).exportGraph(proteinGraph, out, " ");
     }
 
-    private void exportAsCSV(ProteinGraph proteinGraph) throws FileNotFoundException {
+    private void exportAsCSV(ProteinGraph proteinGraph,String label) throws FileNotFoundException {
         // new CustomCSVExporter(25).exportGraph(proteinGraph, System.out);
         System.out.println(filename);
         PrintWriter out = new PrintWriter(filename + ".csv");
-        new CustomCSVExporter(25).exportGraph(proteinGraph, out, ",");
+        new CustomCSVExporter(25,label).exportGraph(proteinGraph, out, ",");
 
     }
 

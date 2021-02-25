@@ -61,9 +61,12 @@ public class MessagePassingLayer extends FeedForwardLayer {
         //Initialize the layer parameters. For example,
         // Note that the entries in paramTable (2 entries here: a weight array of shape [nIn,nOut] and biases of shape [1,nOut]
         // are in turn a view of the 'layerParamsView' array.
+
+
         Map<String, INDArray> paramTable = initializer().init(conf, layerParamsView, initializeParams);
         myCustomLayer.setParamTable(paramTable);
         myCustomLayer.setConf(conf);
+
         return myCustomLayer;
     }
 
@@ -75,7 +78,7 @@ public class MessagePassingLayer extends FeedForwardLayer {
         //See the various parameter initializers here:
         //https://github.com/eclipse/deeplearning4j/tree/master/deeplearning4j/deeplearning4j-nn/src/main/java/org/deeplearning4j/nn/params
 
-        return ConvolutionParamInitializer.getInstance();
+        return DefaultParamInitializer.getInstance();
     }
 
     @Override
