@@ -1,126 +1,122 @@
-import lombok.Data;
-import org.deeplearning4j.nn.conf.MultiLayerConfiguration;
+import org.deeplearning4j.exception.DL4JInvalidInputException;
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
-import org.deeplearning4j.nn.conf.layers.DenseLayer;
-import org.deeplearning4j.nn.conf.layers.OutputLayer;
+import org.deeplearning4j.nn.gradient.DefaultGradient;
+import org.deeplearning4j.nn.gradient.Gradient;
 import org.deeplearning4j.nn.layers.BaseLayer;
-import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
-import org.deeplearning4j.nn.weights.WeightInit;
+import org.deeplearning4j.nn.params.DefaultParamInitializer;
+import org.deeplearning4j.nn.workspace.ArrayType;
 import org.deeplearning4j.nn.workspace.LayerWorkspaceMgr;
 import org.nd4j.common.primitives.Pair;
-import org.nd4j.linalg.activations.Activation;
 import org.nd4j.linalg.activations.IActivation;
 import org.nd4j.linalg.api.buffer.DataType;
 import org.nd4j.linalg.api.ndarray.INDArray;
-import org.nd4j.linalg.cpu.nativecpu.NDArray;
-import org.nd4j.linalg.dataset.DataSet;
 import org.nd4j.linalg.factory.Nd4j;
-import org.nd4j.linalg.learning.config.AdaDelta;
-import org.nd4j.linalg.lossfunctions.LossFunctions;
+import org.nd4j.linalg.indexing.NDArrayIndex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-
+import java.util.Arrays;
 
 
 public class MessagePassingImplementation extends BaseLayer<MessagePassingLayer> {
     private static Logger logger = LoggerFactory.getLogger(MessagePassingImplementation.class);
+
     public MessagePassingImplementation(NeuralNetConfiguration conf, DataType dataType) {
         super(conf, dataType);
     }
 
+    @Override
+    public INDArray activate(boolean training, LayerWorkspaceMgr workspaceMgr) {
+
+        INDArray output = preOutput(training, workspaceMgr);// this is a matrix of the updated feature vectors of each vertex
+        IActivation updateActivationFunction = ((MessagePassingLayer) conf.getLayer()).getUpdateActivationFunction();
+        INDArray ret = updateActivationFunction.getActivation(output, training);
+        if (this.maskArray != null) {
+            this.applyMask(ret);
+        }
+        return ret;
+    }
+
+    @Override
     public boolean isPretrainLayer() {
         return false;
     }
 
     @Override
-    public INDArray activate(INDArray input, boolean training, LayerWorkspaceMgr workspaceMgr) {
+    protected INDArray preOutput(boolean training, LayerWorkspaceMgr workspaceMgr) {
+        INDArray adjMatrix = ((MessagePassingLayer) conf.getLayer()).getAdjacencyMatrix();
+        // Kipf's approach
+        System.out.println(getIterationCount());
+        // message passing
+        INDArray W = this.getParamWithNoise("W", training, workspaceMgr);
+        INDArray b = this.getParamWithNoise("b", training, workspaceMgr);
+        INDArray input = getInput().castTo(this.dataType);
+//        System.out.println(input);
+        if (input.rank() == 2 && input.columns() == W.rows()) {
+            INDArray ret = workspaceMgr.createUninitialized(ArrayType.ACTIVATIONS, W.dataType(), new long[]{input.size(0), W.size(1)});
+            adjMatrix.mmuli(input.castTo(ret.dataType()), ret).mmuli(W, ret);
+//            input.castTo(ret.dataType()).mmuli(W, ret).mmuli(adjMatrix, ret);
+            if (this.maskArray != null) {
+                this.applyMask(ret);
+            }
+            if (this.hasBias()) {
+                ret.addiRowVector(b);
+            }
 
-        INDArray output = preOutput(training, workspaceMgr);// this is a matrix of the updated feature vectors of each vertex
-
-        long nRows = 0;//input.shape()[0];
-        logger.debug("Info log message-> nrow= "+nRows);
-        long featureSize = output.shape()[1];
-        List<INDArray> vertexFeatures = new LinkedList<>();
-
-        for (long i = 0; i < nRows; i++) {
-            vertexFeatures.add(input.getRow(i));
+            return ret;
+        } else if (input.rank() != 2) {
+            throw new DL4JInvalidInputException("Input that is not a matrix; expected matrix (rank 2), got rank " + input.rank() + " array with shape " + Arrays.toString(input.shape()) + ". Missing preprocessor or wrong input type? " + this.layerId());
+        } else {
+            throw new DL4JInvalidInputException("Input size (" + input.columns() + " columns; shape = " + Arrays.toString(input.shape()) + ") is invalid: does not match layer input size (layer # inputs = " + W.size(0) + ") " + this.layerId());
         }
-        IActivation messageActivation = ((MessagePassingLayer) conf.getLayer()).getMessageActivationFunction();
-//        conf.get
-//        Hv = Hv.add(message);
-//        conf.
-
-        // Configure message passing model
-        MultiLayerConfiguration messageModel = new NeuralNetConfiguration.Builder()
-                .seed(1010)
-                .weightInit(WeightInit.XAVIER)
-                .updater(new AdaDelta()) // try other updaters later
-                .list()
-                .layer(new DenseLayer.Builder().nIn(featureSize).nOut(featureSize)
-                        .activation(messageActivation)
-                        .build())
-//                .layer(new DropoutLayer.Builder().dropOut(0.5).nIn(featureSize).nOut(featureSize).build())// Just for test
-//                .layer(new DenseLayer.Builder().nIn(numNodes).nOut(numNodes)
-//                        .activation(Activation.RELU)
-//                        .build())
-                .layer(new OutputLayer.Builder()
-                        .activation(Activation.IDENTITY)
-                        .nIn(featureSize).nOut(featureSize).build())
-                .build();
-        MultiLayerNetwork net = new MultiLayerNetwork(messageModel);
-        net.init();
-        // Configure update  model
-        MultiLayerConfiguration updateModel = new NeuralNetConfiguration.Builder()
-                .seed(1010)
-                .weightInit(WeightInit.XAVIER)
-                .updater(new AdaDelta()) // try other updaters later
-                .list()
-                .layer(new DenseLayer.Builder().nIn(featureSize).nOut(featureSize)
-                        .activation(messageActivation)
-                        .build())
-                .layer(new OutputLayer.Builder()
-                        .activation(Activation.IDENTITY)
-                        .nIn(featureSize).nOut(featureSize).build())
-                .build();
-        MultiLayerNetwork net1 = new MultiLayerNetwork(updateModel);
-        net1.init();
-
-        vertexFeatures.parallelStream().forEach((data) -> {
-                    //                    System.out.println("features");
-//                    System.out.println(data_30.getFeatures());
-                    INDArray Hv = Nd4j.zeros(data.columns());
-
-                    // get neighbors of v
-                    ArrayList<Integer> neighbors = new ArrayList<>();
-                    for (int j = 1; j < data.columns() - 25; j++) {
-                        if (data.getDouble(j) > 0) {
-                            if (j != vertexFeatures.indexOf(data))
-                                neighbors.add(j);
-                        }
-                    }
-                    // message passing phase
-                    for (Integer n : neighbors) {
-                        List<INDArray> activations = net.feedForward(vertexFeatures.get(n), true);
-                        INDArray message = activations.get(activations.size() - 1);
-                        Hv = Hv.add(message);
-                    }
-                    // Update Phase
-                    Hv.add(data); // add the hv of the vertex
-//            DataSet set1 = new DataSet(Hv, Hv);
-                    List<INDArray> activations = net1.feedForward(Hv);
-                    INDArray update = activations.get(activations.size() - 1);
-                    output.putRow(vertexFeatures.indexOf(data), update);
-
-                }
-        );
-
-
-        return output;
     }
 
+    @Override
+    public Pair<Gradient, INDArray> backpropGradient(INDArray epsilon, LayerWorkspaceMgr workspaceMgr) {
+        /*
+        The baockprop gradient method here is very similar to the BaseLayer backprop gradient implementation
+        The only major difference is the two activation functions we have added in this example.
+        Note that epsilon is dL/da - i.e., the derivative of the loss function with respect to the activations.
+        It has the exact same shape as the activation arrays (i.e., the output of preOut and activate methods)
+        This is NOT the 'delta' commonly used in the neural network literature; the delta is obtained from the
+        epsilon ("epsilon" is dl4j's notation) by doing an element-wise product with the activation function derivative.
+        Note the following:
+        1. Is it very important that you use the gradientViews arrays for the results.
+           Note the gradientViews.get(...) and the in-place operations here.
+           This is because DL4J uses a single large array for the gradients for efficiency. Subsets of this array (views)
+           are distributed to each of the layers for efficient backprop and memory management.
+        2. The method returns two things, as a Pair:
+           (a) a Gradient object (essentially a Map<String,INDArray> of the gradients for each parameter (again, these
+               are views of the full network gradient array)
+           (b) an INDArray. This INDArray is the 'epsilon' to pass to the layer below. i.e., it is the gradient with
+               respect to the input to this layer
+        */
+
+        INDArray activationDerivative = preOutput(true, workspaceMgr);
+        IActivation activation = ((MessagePassingLayer) conf.getLayer()).getUpdateActivationFunction();
+//        System.out.println(activationDerivative.rows());
+        INDArray hstack = Nd4j.vstack(epsilon, Nd4j.zeros(input.rows() - 1, epsilon.columns()));
+        activation.backprop(activationDerivative, hstack);
+
+        //The remaining code for this method: just copy & pasted from BaseLayer.backpropGradient
+//        INDArray delta = epsilon.muli(activationDerivative);
+        if (maskArray != null) {
+            activationDerivative.muliColumnVector(maskArray);
+        }
+
+        Gradient ret = new DefaultGradient();
+
+        INDArray weightGrad = gradientViews.get(DefaultParamInitializer.WEIGHT_KEY);    //f order
+        Nd4j.gemm(input, activationDerivative, weightGrad, true, false, 1.0, 0.0);
+        INDArray biasGrad = gradientViews.get(DefaultParamInitializer.BIAS_KEY);
+        biasGrad.assign(activationDerivative.sum(0));  //TODO: do this without the assign
+
+        ret.gradientForVariable().put(DefaultParamInitializer.WEIGHT_KEY, weightGrad);
+        ret.gradientForVariable().put(DefaultParamInitializer.BIAS_KEY, biasGrad);
+
+        INDArray epsilonNext = params.get(DefaultParamInitializer.WEIGHT_KEY).mmul(activationDerivative.transpose()).transpose();
+
+        return new Pair<>(ret, workspaceMgr.leverageTo(ArrayType.ACTIVATION_GRAD, epsilonNext));
+    }
 
 }

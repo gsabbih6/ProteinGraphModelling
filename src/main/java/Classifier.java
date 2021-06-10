@@ -109,7 +109,9 @@ public class Classifier {
 
     public void saveInput(String[] dir, String[][] list) throws IOException, InterruptedException {
         int count = 0;
+        String l = dir[0];
 
+        String[] h = list[0];
         List<INDArray> l1 = generateEmbedding(dir[0], list[0]);//enzymes
 //        INDArray labelsNonEnzymes = Nd4j.zeros(l1.size(), 1);
         INDArray labelsNonEnzymes = Nd4j.concat(1, Nd4j.ones(l1.size(), 1), Nd4j.zeros(l1.size(), 1));

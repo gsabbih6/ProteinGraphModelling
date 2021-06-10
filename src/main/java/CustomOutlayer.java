@@ -1,45 +1,30 @@
-import lombok.Data;
 import org.deeplearning4j.nn.api.Layer;
 import org.deeplearning4j.nn.api.ParamInitializer;
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
 import org.deeplearning4j.nn.conf.inputs.InputType;
-import org.deeplearning4j.nn.conf.layers.ConvolutionLayer;
-import org.deeplearning4j.nn.conf.layers.DenseLayer;
 import org.deeplearning4j.nn.conf.layers.FeedForwardLayer;
+import org.deeplearning4j.nn.conf.layers.OutputLayer;
 import org.deeplearning4j.nn.conf.memory.LayerMemoryReport;
 import org.deeplearning4j.nn.conf.memory.MemoryReport;
-import org.deeplearning4j.nn.params.ConvolutionParamInitializer;
 import org.deeplearning4j.nn.params.DefaultParamInitializer;
 import org.deeplearning4j.optimize.api.TrainingListener;
 import org.nd4j.linalg.activations.Activation;
 import org.nd4j.linalg.activations.IActivation;
 import org.nd4j.linalg.api.buffer.DataType;
 import org.nd4j.linalg.api.ndarray.INDArray;
+import org.nd4j.linalg.lossfunctions.ILossFunction;
+import org.nd4j.linalg.lossfunctions.LossFunctions;
 
 import java.util.Collection;
 import java.util.Map;
 
-@Data
+public class CustomOutlayer  extends OutputLayer {
 
-/*
- * The class is used to configure the Message Passing Layer. In order words it is reposible for setting up the
- * attributes for each Message passing Layer
- * */
-public class MessagePassingLayer extends FeedForwardLayer {
-    private IActivation messageActivationFunction;
-    private IActivation updateActivationFunction;
-    private INDArray adjacencyMatrix;
-
-    public MessagePassingLayer() {
+    public CustomOutlayer() {
     }
 
-    public MessagePassingLayer(Builder builder) {
+    public CustomOutlayer(OutputLayer.Builder builder) {
         super(builder);
-        this.messageActivationFunction = builder.messageActivationFunction;
-        this.updateActivationFunction = builder.updateActivationFunction;
-        this.adjacencyMatrix = builder.adjacencyMatrix;
-//        new DenseLayer.Builder().build();
-
     }
 
     @Override
@@ -49,7 +34,7 @@ public class MessagePassingLayer extends FeedForwardLayer {
         // (i.e., a CustomLayerImpl instance)
         //For the most part, it's the same for each type of layer
 
-        MessagePassingImplementation myCustomLayer = new MessagePassingImplementation(conf, networkDType);
+        CustomOutputImplementation myCustomLayer = new CustomOutputImplementation(conf, networkDType);
         myCustomLayer.setListeners(iterationListeners);             //Set the iteration listeners, if any
         myCustomLayer.setIndex(layerIndex);                         //Integer index of the layer
 
@@ -87,7 +72,6 @@ public class MessagePassingLayer extends FeedForwardLayer {
         //Memory report is used to estimate how much memory is required for the layer, for different configurations
         //If you don't need this functionality for your custom layer, you can return a LayerMemoryReport
         // with all 0s, or
-
         //This implementation: based on DenseLayer implementation
         InputType outputType = getOutputType(-1, inputType);
 
@@ -100,46 +84,32 @@ public class MessagePassingLayer extends FeedForwardLayer {
             //Assume we dup the input for dropout
             trainSizeVariable += inputType.arrayElementsPerExample();
         }
-
         //Also, during backprop: we do a preOut call -> gives us activations size equal to the output size
         // which is modified in-place by activation function backprop
         // then we have 'epsilonNext' which is equivalent to input size
         trainSizeVariable += outputType.arrayElementsPerExample();
 
-        return new LayerMemoryReport.Builder(layerName, MessagePassingLayer.class, inputType, outputType)
+        return new LayerMemoryReport
+                .Builder(layerName, ReadoutLayer.class, inputType, outputType)
                 .standardMemory(numParams, updaterStateSize)
                 .workingMemory(0, 0, trainSizeFixed, trainSizeVariable)     //No additional memory (beyond activations) for inference
                 .cacheMemory(MemoryReport.CACHE_MODE_ALL_ZEROS, MemoryReport.CACHE_MODE_ALL_ZEROS) //No caching in DenseLayer
                 .build();
     }
+    public static class Builder extends OutputLayer.Builder {
 
-    public static class Builder extends FeedForwardLayer.Builder {
-
-        private INDArray adjacencyMatrix;
-        private IActivation messageActivationFunction;
-        private IActivation updateActivationFunction;
-
-        //        public Builder secondActivationFunction(String secondActivationFunction) {
-//            return secondActivationFunction(Activation.fromString(secondActivationFunction));
-//        }
-        public Builder messageActivationFunction(Activation secondActivationFunction) {
-            this.messageActivationFunction = secondActivationFunction.getActivationFunction();
-            return this;
+        public Builder(LossFunctions.LossFunction lossFunction) {
+            super(lossFunction);
         }
 
-        public Builder updateActivationFunction(Activation secondActivationFunction) {
-            this.updateActivationFunction = secondActivationFunction.getActivationFunction();
-            return this;
-        }
-        public Builder adjacencyMatrix(INDArray adjacencyMatrix) {
-            this.adjacencyMatrix = adjacencyMatrix;
-            return this;
+        public Builder(ILossFunction lossFunction) {
+            super(lossFunction);
         }
 
         @Override
         @SuppressWarnings("unchecked")  //To stop warnings about unchecked cast. Not required.
-        public MessagePassingLayer build() {
-            return new MessagePassingLayer(this);
+        public CustomOutlayer build() {
+            return new CustomOutlayer(this);
         }
     }
 }

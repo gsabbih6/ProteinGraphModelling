@@ -8,6 +8,7 @@ import org.jgrapht.alg.clique.*;
 import org.jgrapht.nio.Attribute;
 import org.jgrapht.nio.DefaultAttribute;
 import org.jgrapht.nio.dot.DOTExporter;
+import org.nd4j.linalg.api.ndarray.INDArray;
 //import org.jgrapht.nio.matrix.MatrixExporter;
 
 import javax.swing.*;
@@ -31,14 +32,14 @@ public class ProteinGraph extends DefaultUndirectedWeightedGraph<AminoAcid, Bond
         super(edgeClass);
     }
 
-    public void exportGraph(String supportedType, String filename,String label) throws FileNotFoundException {
+    public void exportGraph(String supportedType, String filename, String label) throws FileNotFoundException {
         this.filename = filename;
         switch (supportedType) {
             case EXPORT_TYPE_CSV:
-                exportAsCSV(this,label);
+                exportAsCSV(this, label);
                 break;
             case EXPORT_TYPE_MATRIX:
-                exportAsMatrix(this,label);
+                exportAsMatrix(this, label);
                 break;
             case EXPORT_TYPE_DOT:
                 exportAsDOT(this);
@@ -56,19 +57,25 @@ public class ProteinGraph extends DefaultUndirectedWeightedGraph<AminoAcid, Bond
 //        mxPngImageEncoder
     }
 
-    private void exportAsMatrix(ProteinGraph proteinGraph,String label) throws FileNotFoundException {
+    private void exportAsMatrix(ProteinGraph proteinGraph, String label) throws FileNotFoundException {
 //        new MatrixExporter().exportAdjacencyMatrix( new PrintWriter(out), proteinGraph );
         PrintWriter out = new PrintWriter(filename + ".txt");
-        new CustomCSVExporter(25,label).exportGraph(proteinGraph, out, " ");
+        new CustomCSVExporter(25, label).exportGraph(proteinGraph, out, " ");
     }
 
-    private void exportAsCSV(ProteinGraph proteinGraph,String label) throws FileNotFoundException {
+    private void exportAsCSV(ProteinGraph proteinGraph, String label) throws FileNotFoundException {
         // new CustomCSVExporter(25).exportGraph(proteinGraph, System.out);
         System.out.println(filename);
         PrintWriter out = new PrintWriter(filename + ".csv");
-        new CustomCSVExporter(25,label).exportGraph(proteinGraph, out, ",");
+        new CustomCSVExporter(25, label).exportGraph(proteinGraph, out, ",");
 
     }
+
+    public Protein getProteinAsAX(String label) {
+//        return new INDArrayExporter(1,"a").adjacencyMatrix(this,true);
+        return new INDArrayExporter(26, label).getProteinAsAX(this, true);
+    }
+
 
     private void exportAsDOT(ProteinGraph proteinGraph) throws FileNotFoundException {
         DOTExporter<AminoAcid, Bond> exporter =
@@ -215,7 +222,8 @@ public class ProteinGraph extends DefaultUndirectedWeightedGraph<AminoAcid, Bond
         int i = 0;
         for (Map.Entry<AminoAcid, ArrayList<AminoAcid>> es : aminoAcidsHBonds.entrySet()) {
 
-            AminoAcid aa = es.getKey();if (aa == null) continue;
+            AminoAcid aa = es.getKey();
+            if (aa == null) continue;
             for (AminoAcid aaa : es.getValue()) {
 
 

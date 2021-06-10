@@ -24,7 +24,6 @@ import java.util.Map;
  * attributes for each Message passing Layer
  * */
 public class ReadoutLayer extends FeedForwardLayer {
-    private IActivation messageActivationFunction;
     private IActivation readActivationFunction;
 
     public ReadoutLayer() {
@@ -32,10 +31,9 @@ public class ReadoutLayer extends FeedForwardLayer {
 
     public ReadoutLayer(Builder builder) {
         super(builder);
-        this.messageActivationFunction = builder.messageActivationFunction;
         this.readActivationFunction = builder.readActivationFunction;
 
-        new DenseLayer.Builder().build();
+//        new DenseLayer.Builder().build();
 
     }
 
@@ -84,7 +82,6 @@ public class ReadoutLayer extends FeedForwardLayer {
         //Memory report is used to estimate how much memory is required for the layer, for different configurations
         //If you don't need this functionality for your custom layer, you can return a LayerMemoryReport
         // with all 0s, or
-
         //This implementation: based on DenseLayer implementation
         InputType outputType = getOutputType(-1, inputType);
 
@@ -97,13 +94,13 @@ public class ReadoutLayer extends FeedForwardLayer {
             //Assume we dup the input for dropout
             trainSizeVariable += inputType.arrayElementsPerExample();
         }
-
         //Also, during backprop: we do a preOut call -> gives us activations size equal to the output size
         // which is modified in-place by activation function backprop
         // then we have 'epsilonNext' which is equivalent to input size
         trainSizeVariable += outputType.arrayElementsPerExample();
 
-        return new LayerMemoryReport.Builder(layerName, MessagePassingLayer.class, inputType, outputType)
+        return new LayerMemoryReport
+                .Builder(layerName, ReadoutLayer.class, inputType, outputType)
                 .standardMemory(numParams, updaterStateSize)
                 .workingMemory(0, 0, trainSizeFixed, trainSizeVariable)     //No additional memory (beyond activations) for inference
                 .cacheMemory(MemoryReport.CACHE_MODE_ALL_ZEROS, MemoryReport.CACHE_MODE_ALL_ZEROS) //No caching in DenseLayer
@@ -111,23 +108,12 @@ public class ReadoutLayer extends FeedForwardLayer {
     }
 
     public static class Builder extends FeedForwardLayer.Builder {
-
-        private IActivation messageActivationFunction;
         private IActivation readActivationFunction;
 
-        //        public Builder secondActivationFunction(String secondActivationFunction) {
-//            return secondActivationFunction(Activation.fromString(secondActivationFunction));
-//        }
-        public Builder messageActivationFunction(Activation secondActivationFunction) {
-            this.messageActivationFunction = secondActivationFunction.getActivationFunction();
+        public Builder readActivationFunction(Activation readActivationFunction) {
+            this.readActivationFunction = readActivationFunction.getActivationFunction();
             return this;
         }
-
-        public Builder readActivationFunction(Activation secondActivationFunction) {
-            this.readActivationFunction = secondActivationFunction.getActivationFunction();
-            return this;
-        }
-
         @Override
         @SuppressWarnings("unchecked")  //To stop warnings about unchecked cast. Not required.
         public ReadoutLayer build() {

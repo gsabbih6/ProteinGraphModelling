@@ -126,7 +126,7 @@
             <groupId>org.nd4j</groupId>
             <artifactId>nd4j-native</artifactId>
             <version>1.0.0-beta7</version>
-<!--            <classifier>windows-x86_64-avx2</classifier>-->
+            <classifier>windows-x86_64-avx2</classifier>
         </dependency>
         <!--        <dependency>-->
         <!--            <groupId>org.deeplearning4j</groupId>-->
